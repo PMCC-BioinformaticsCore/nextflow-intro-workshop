@@ -1,0 +1,8 @@
+---
+title: "**Introduction to Nextflow**"
+output:
+  html_document:
+    toc: false
+    toc_float: false
+from: markdown+emoji
+---

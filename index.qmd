@@ -6,10 +6,13 @@ This workshop is designed to provide participants with a foundational understand
 
 *It is not intended for those looking to develop new Nextflow workflows*
 
-### Trainers
+### Course Presenters
 
 - Richard Lupat, Bioinformatics Core Facility
 - Miriam Yeung, Cancer Genomics Translational Research Centre
+
+### Course Helpers
+
 - Sanduni Rajapaksa, Research Computing Facility
 - Henrietta Holze, Dawson Lab
 
