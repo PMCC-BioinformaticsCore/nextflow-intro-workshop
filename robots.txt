@@ -1,0 +1,1 @@
+Sitemap: https://PMCC-BioinformaticsCore.github.io/nextflow-intro-workshop/sitemap.xml
