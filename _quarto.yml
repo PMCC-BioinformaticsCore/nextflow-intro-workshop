@@ -1,0 +1,32 @@
+project:
+  type: website
+
+website:
+  title: "Peter Mac Nextflow Workshop"
+  navbar:
+    left:
+      - href: index.qmd
+        text: Home
+      - href: workshops/00_setup.qmd
+        text: Setup
+      - text: Workshop
+        menu:
+        - text: "Introduction to Nextflow"
+          href: workshops/1.1_intro_nextflow.html
+        - text: "Introduction to nf-core"
+          href: workshops/1.2_intro_nf_core.html
+        - text: "Customising & running nf-core pipelines"
+          href: workshops/2.1_customise_and_run.html
+        - text: "Troubleshooting Nextflow run"
+          href: workshops/2.2_troubleshooting.html
+        - text: "Best practise, tips and tricks"
+          href: workshops/2.3_tips_and_tricks.html
+
+format:
+  html:
+    theme: cosmo
+    css: styles.css
+    toc: true
+
+
+
