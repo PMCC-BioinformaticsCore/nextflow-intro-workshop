@@ -6,3 +6,67 @@ output:
     toc_float: false
 from: markdown+emoji
 ---
+
+::: callout-tip
+### Objectives{.unlisted}
+
+- Understand the levels of customisation available for nf-core pipelines
+- Use the nf-core documentation to select appropriate parameters for a run command 
+- Write and run a nf-core rnaseq command on the command line 
+- Explore pipeline deployment and outputs 
+:::
+
+### **2.1.2. Design your run command**
+
+As we learnt in [lesson 1.3.3](../notebooks/1.3_configure.md#viewing-parameters), all nf-core pipelines have a unique set of pipeline-specific parameters that can be used in conjunction with Nextflow parameters to configure the workflow. Generally, nf-core pipelines can be customised at a few different levels:
+
+|Level of effect      |Customisation feature                                                        |
+|---------------------|-----------------------------------------------------------------------------|
+|The workflow         |Where diverging methods are available for a pipeline, you may choose a path to follow  |
+|A process            |Where more than one tool is available for a single step, you may choose which to use  |
+|A tool               |Apply specific thresholds or optional flags for a tool on top of the default run command |
+|Compute resources    |Specify resource thresholds or software execution methods for the workflow or a process  |
+
+All nf-core pipelines are provided with comprehensive documentation that explain what the default workflow structure entails and options for customising this based on your needs. It is important to remember that nf-core pipelines typically do not include all possible tool parameters. This makes it challenging to piece these different sources of information together to determine which parameters you should be using. 
+
+The following sections of the documentation can be used to understand what the pipeline is doing and inform your choices about aspects of pipeline-specific customisations:
+
++------------------------------------------------------------+-------------------+---------------------+
+| Docs                                                       | Description       | Customisation level |
++============================================================+===================+=====================+
+| [Introduction](https://nf-co.re/rnaseq/3.11.1)             |  Workflow summary | - workflow          |
+|                                                            |                   | - process           |
++------------------------------------------------------------+-------------------+---------------------+
+| [Usage](https://nf-co.re/rnaseq/3.11.1/usage)              | Inputs and options| - workflow          |
+|                                                            |                   | - process           |
++------------------------------------------------------------+-------------------+---------------------+
+| [Parameters](https://nf-co.re/rnaseq/3.11.1/parameters)    | Available flags   | - workflow          |
+|                                                            |                   | - process           |
+|                                                            |                   | - compute resources |
++------------------------------------------------------------+-------------------+---------------------+
+| [Output](https://nf-co.re/rnaseq/3.11.1/output)            | Files from all    | - workflow          |
+|                                                            | processes         | - process           |
+|                                                            | processes         | - tool              |
++------------------------------------------------------------+-------------------+---------------------+
+</br>
+
+#### **Pipeline structure**
+
+:eyes: Looking at the nf-core/rnaseq pipeline structure provided in the [introduction](https://nf-co.re/rnaseq/3.11.1), we can see that the developers have:
+
+1. Organised the workflow into 5 stages based on the type of work that is being done
+2. Provided a choice of multiple methods and specified defaults
+3. Provided a choice of tool for some steps
+
+![](../figs/2.1_pipeline-choice.png)
+
+::: callout-tip
+### **Thoughts? :thought_balloon:**{.unlisted}
+
+:question: Observing the diagram above, which statement is true regarding the choice of alignment and quantification methods provided by the nf-core/rnaseq pipeline?
+
+**a.** The pipeline uses a fixed method for read alignment and quantification.  
+**b.** Users can choose between several different methods for read alignment and quantification.   
+**c.** The pipeline always performs read alignment and quantification using STAR or HISAT2.     
+**d.** The choice of alignment and quantification method is determined automatically based on the input data.  
+:::

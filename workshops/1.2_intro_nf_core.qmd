@@ -6,3 +6,77 @@ output:
     toc_float: false
 from: markdown+emoji
 ---
+
+Introduction to nf-core: Introduce nf-core features and concepts, structures, tools, and example nf-core pipelines
+
+## What is nf-core?
+
+nf-core is a **community** effort to collect a curated set of **analysis workflows** built using Nextflow.
+
+nf-core provides a standardized set of **best practices, guidelines,** and **templates** for building and sharing bioinformatics workflows. These workflows are designed to be modular, scalable, and portable, allowing researchers to easily adapt and execute them using their own data and compute resources.
+
+The community is a diverse group of bioinformaticians, developers, and researchers from around the world who collaborate on developing and maintaining a growing collection of high-quality workflows. These workflows cover a range of applications, including transcriptomics, proteomics, and metagenomics.
+
+One of the key benefits of nf-core is that it promotes **open development, testing,** and **peer review**, ensuring that the workflows are robust, well-documented, and validated against real-world datasets. This helps to increase the reliability and reproducibility of bioinformatics analyses and ultimately enables researchers to accelerate their scientific discoveries.
+
+nf-core is published in Nature Biotechnology: [Nat Biotechnol 38, 276–278 (2020). Nature Biotechnology](https://www.nature.com/articles/s41587-020-0439-x)
+
+**Key Features of nf-core workflows**
+
+- **Documentation**
+    - nf-core workflows have extensive documentation covering installation, usage, and description of output files to ensure that you won’t be left in the dark.
+
+- **Stable Releases**
+    - nf-core workflows use GitHub releases to tag stable versions of the code and software, making workflow runs totally reproducible.
+
+- **Packaged software**
+    - Pipeline dependencies are automatically downloaded and handled using Docker, Singularity, Conda, or other software management tools. There is no need for any software installations.
+
+- **Portable and reproducible**
+    - nf-core workflows follow best practices to ensure maximum portability and reproducibility. The large community makes the workflows exceptionally well-tested and easy to execute.
+
+- **Cloud-ready**
+    - nf-core workflows are tested on AWS
+
+## Executing an nf-core workflow
+
+The [nf-core website](https://nf-co.re/) has a full list of workflows and asssociated documentation tno be explored.
+
+Each workflow has a dedicated page that includes expansive documentation that is split into 7 sections:
+
+- **Introduction**
+  - An introduction and overview of the workflow
+- **Results**
+  - Example output files generated from the full test dataset
+- **Usage docs**
+  - Descriptions of how to execute the workflow
+- **Parameters**
+  - Grouped workflow parameters with descriptions
+- **Output docs**
+  - Descriptions and examples of the expected output files
+- **Releases & Statistics**
+  - Workflow version history and statistics
+
+
+<!-- Edit here to recommend pulling to ensure that a specific version is locked down -->
+Unless you are actively developing workflow code, you don't need to clone the workflow code from GitHub and can use Nextflow’s built-in functionality to `pull` and a workflow. As shown in the [introduction to Nextflow](1.1_nextflow.md#1.1.7.-executing-a-workflow), the Nextflow `pull` command can download and cache workflows from [GitHub](https://github.com/nf-core/) repositories:
+
+```default
+nextflow pull nf-core/<pipeline>
+```
+
+Nextflow `run` will also automatically `pull` the workflow if it was not already available locally:
+
+```default
+nextflow run nf-core/<pipeline>
+```
+
+Nextflow will `pull` the default git branch if a workflow version is not specified. This will be the master branch for nf-core workflows with a stable release. nf-core workflows use GitHub releases to tag stable versions of the code and software. You will always be able to execute a previous version of a workflow once it is released using the `-revision` or `-r` flag.
+
+
+### **Key points**
+
+- nf-core is a community effort to collect a curated set of analysis workflows built using Nextflow.
+- Nextflow can be used to `pull` nf-core workflows.
+---
+^*These materials are adapted from [Customising Nf-Core Workshop](https://sydney-informatics-hub.github.io/customising-nfcore-workshop/notebooks/1.2_nfcore.html) by Sydney Informatics Hub*^
