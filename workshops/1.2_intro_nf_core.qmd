@@ -262,130 +262,41 @@ We will revisit this at the end of the module
 
 :::
 
-The `process` scope allows you to configure workflow processes and is used extensively to define resources and additional arguments for modules.
+### **1.2.7 Parameter files**
+Parameter files are used to define `params` options for a pipeline, generally written in the YAML format. They are added to a pipeline with the flag `--params-file`
 
-By default, process resources are allocated in the `conf/base.config` file using the `withLabel` selector:
-
+Example YAML:
 ```default
-process {
-    withLabel: BIG_JOB {
-        cpus = 16
-        memory = 64.GB
-    }
-}
+"<parameter1_name>": 1,
+"<parameter2_name>": "<string>",
+"<parameter3_name>": true
 ```
-
-Similarly, the `withName` selector enables the configuration of a process by name. By default, module parameters are defined in the `conf/modules.config` file:
-
-```default
-process {
-    withName: MYPROCESS {
-        cpus = 4
-        memory = 8.GB
-    }
-}
-```
-
-While some tool arguments are included as a part of a module. To make modules sharable across workflows, most tool arguments are defined in the `conf/modules.conf` file in the workflow code under the `ext.args` entry.
-
-For example, if you were trying to add arguments in the `MULTIQC` process in the `nf-core/testpipeline` workflow, you could use the process scope:
-
-```default
-process {
-    withName : ".*:MULTIQC" {
-        ext.args   = { "<your custom parameter>" }
-
-    }
-```
-
-However, if a process is used multiple times in the same workflow, an extended execution path of the module may be required to make it more specific:
-
-```default
-process {
-    withName: "NFCORE_DEMO:DEMO:MULTIQC" {
-        ext.args = "<your custom parameter>"
-    }
-}
-```
-
-The extended execution path is built from the workflows, subworkflows, and modules used to execute the process.
-
-In the example above, the nf-core [`MULTIQC`](https://github.com/nf-core/testpipeline/blob/master/modules/nf-core/multiqc/main.nf) module, was called by the [`DEMO`](https://github.com/nf-core/testpipeline/blob/master/workflows/demo.nf) workflow, which was called by the [`NFCORE_DEMO`](https://github.com/nf-core/testpipeline/blob/master/main.nf) workflow in the `main.nf` file.
-
-::: callout-tip
-
-It can be tricky to evaluate the path used to execute a module. If you are unsure of how to build the path you can copy it from the `conf/modules.conf` file. How arguments are added to a process can also vary. Be vigilant when you are modifying parameters.
-
-:::
 
 ::: callout-tip
 
 ### **Challenge**{.unlisted}
 
-Create a new `.config` file that uses the `process` scope to overwrite the `args` for the `MULTIQC` process. Change the `args` to your favourite **month** of the year, e.g, `"--title \"october\""`.
+Based on the failed application of the parameter `multiqc_title` create a `my_params.yml` setting `multiqc_title` to your favourite colour.
+Then re-run the pipeline with the your `my_params.yml`
 
 :::
 
 ::: {.callout-caution collapse="true"}
 
 ### Solution
-
-Make a custom config file that uses the `process` scope to replace the `args` for the `MULTIQC` process:
+Set up `my_params.yml`
 
 ```default
-process {
-    withName: "NFCORE_DEMO:DEMO:MULTIQC" {
-        ext.args = "--title \"october\""
-    }
-}
+multiqc_title: "black"
 ```
 
-Execute your run command again with the custom configuration file:
-
 ```default
-nextflow run nf-core/testpipeline -c my_custom_config.config -resume
-```
-
-Check that it has been applied:
-
-```default
-ls my_results/multiqc/
+nextflow run nf-core/testpipeline -profile test,singularity --params-file my_params.yml --outdir Lesson1_2
 ```
 
 :::
 
-::: callout-tip
-
-### **Challenge**{.unlisted}
-
-Demonstrate the configuration hierarchy using the `nf-core/testpipeline` workflow by adding a params file (`-params-file`), and a command line flag (`--multiqc_title`) to your execution. You can use the files you have already created.
-
-:::
-
-::: {.callout-caution collapse="true"}
-
-### Solution
-
-Use the `.json` file you created previously:
-
-```default
-{
-   "multiqc_title": "cheese"
-}
-```
-
-Execute your command with your params file (`-params-file`) and a command line flag (`--multiqc_title`):
-
-```default
-nextflow run nf-core/testpipeline -resume -params-file my_custom_params.json --multiqc_title "koala"
-```
-
-In this example, as the command line is at the top of the hierarchy, the `multiqc_title` will be "koala".
-
-:::
-
-
-### **1.2.7. Default configuration files**
+### **1.2.8. Default configuration files**
 
 All parameters will have a default setting that is defined using the `nextflow.config` file in the workflow project directory. By default, most parameters are set to `null` or `false` and are only activated by a profile or configuration file.
 
@@ -429,39 +340,7 @@ If you're computer has internet access and one of Conda, Singularity, or Docker 
 
 :::
 
-### **1.2.8 Parameter files**
-Parameter files are used to define `params` options for a pipeline, generally written in the YAML format. They are added to a pipeline with the flag `--params-file`
 
-Example YAML:
-```default
-"<parameter1_name>": 1,
-"<parameter2_name>": "<string>",
-"<parameter3_name>": true
-```
-
-::: callout-tip
-
-### **Challenge**{.unlisted}
-
-Based on the failed application of the parameter `multiqc_title` create a `my_params.yml` setting `multiqc_title` to your favourite colour.
-Then re-run the pipeline with the your `my_params.yml`
-
-:::
-
-::: {.callout-caution collapse="true"}
-
-### Solution
-Set up `my_params.yml`
-
-```default
-multiqc_title: "black"
-```
-
-```default
-nextflow run nf-core/testpipeline -profile test,singularity --params-file my_params.yml --outdir Lesson1_2
-```
-
-:::
 
 ::: {.callout-note}
 ### **Key points**
