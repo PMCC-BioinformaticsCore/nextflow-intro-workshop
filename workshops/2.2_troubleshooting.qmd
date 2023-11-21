@@ -378,7 +378,7 @@ salmon quant \
     -o HBR_Rep1_ERCC
 ```
 
-Looking at the nf-core/rnaseq Parameter documentation and Salmon documentation, we found that we can override this default using the `--salmon_quant_libtype U` [parameter](https://nf-co.re/rnaseq/3.11.1/parameters#salmon_quant_libtype) to indicate our data is unstranded and override `samplesheet.csv` input. 
+Looking at the nf-core/rnaseq Parameter documentation and Salmon documentation, we found that we can override this default using the `--salmon_quant_libtype A` [parameter](https://nf-co.re/rnaseq/3.11.1/parameters#salmon_quant_libtype) to indicate our data is unstranded and override `samplesheet.csv` input. 
 
 ::: callout-note
 
@@ -395,7 +395,7 @@ From the previous section we learn that Nextflow accepts either `yaml` or `json`
 ::: callout-tip
 ### **Challenge**{.unlisted}
 
-Fill in the parameters file below and save as `workshop-params.yaml`. This time, include the `--salmon_quant_libtype U` parameter. 
+Fill in the parameters file below and save as `workshop-params.yaml`. This time, include the `--salmon_quant_libtype A` parameter. 
 
 :bulb: YAML formatting tips!
 
@@ -412,7 +412,7 @@ salmon_index: ""
 skip_markduplicates: 
 save_trimmed: 
 save_unaligned: 
-salmon_quant_libtype: "U" 
+salmon_quant_libtype: "A" 
 ```
 :::
 
