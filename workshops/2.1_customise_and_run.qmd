@@ -225,7 +225,7 @@ The parameters we will use are:
 ::: {.callout-tip collapse="true"}
 ### **What if the parameter I want to apply isn't available?**
 
-Recall from [earlier](2.1_customise_and_run.qmd#custom-configuration-files) that nf-core modules use `ext.args` to pass additional arguments to a module. This uses a special Nextflow directive [`ext`](https://www.nextflow.io/docs/latest/process.html#ext). If an nf-core pipeline does not have a pre-defined parameter for a process, you may be able to implement `ext.args` as we do in [lesson 2.4.4](2.4_multiConfig.html#apply-external-arguments). 
+Recall from [earlier](2.1_customise_and_run.qmd#custom-configuration-files) that nf-core modules use `ext.args` to pass additional arguments to a module. This uses a special Nextflow directive [`ext`](https://www.nextflow.io/docs/latest/process.html#ext). If an nf-core pipeline does not have a pre-defined parameter for a process, you may be able to implement `ext.args`. 
 
 The inclusion of `ext.args` is currently best practice for all DSL2 nf-core modules where additional parameters may be required to run a process. However, this may not be implemented for all modules in all nf-core pipelines. Depending on the pipeline, these process modules may not have defined the `ext.args` variable in the script blocks and is thus not available for applying customisation. If that is the case consider submitting a feature request or a making pull request on the pipeline's GitHub repository to implement this!
 :::
@@ -314,7 +314,7 @@ All final outputs will be presented in a directory specified by the `--outdir` f
 
 ::: callout-tip
 ### Challenge{.unlisted}
-Convert the parameter definitions into a YAML file, `workshop-params.yml`, compatible with `--params-file`
+Convert the parameter definitions into a YAML file, `workshop-params.yaml`, compatible with `--params-file`
 :::
 
 ::: {.callout-caution collapse="true"}
@@ -322,11 +322,12 @@ Convert the parameter definitions into a YAML file, `workshop-params.yml`, compa
 ```default
 gtf: "/data/seqliner/test-data/rna-seq/ref/chr22_with_ERCC92.gtf"
 fasta: "/data/seqliner/test-data/rna-seq/ref/chr22_with_ERCC92.fa"
-skip_markduplicates: "true"
-save_trimmed: "true"
-save_unaligned: "true"
+skip_markduplicates: true
+save_trimmed: true
+save_unaligned: true
 max_memory: "6.GB" 
 max_cpus: 2
+input: "samplesheet.csv"
 ```
 :::
 
@@ -337,15 +338,6 @@ max_cpus: 2
 - Parameters can be used to customise the workflow, processes, tools, and compute resources.  
 :::
 
-
-::: callout-tip
-### Objectives{.unlisted}
-
-- Learn how to check the default configurations that are applied to nf-core workflows
-- Understand how to over-ride default configurations with custom configuration files
-- Write a custom config file for your local environment and apply this configuration to your run
-- Observe the hierarchy of parameter configuration in action  
-:::
 
 In the previous exercises, we have explored how to customise a run with **workflow parameters** on the command line or within a parameters file. In this lesson we will now look at **configuration settings**, which manage **how the workflow is implemented on your system**. 
 
@@ -402,7 +394,7 @@ In our runs so far, we have avoided the need for a custom resource configuration
 
 - Over-riding the default tool access method of `$PATH` by specifying the `singularity` profile defined in `workflow/nextflow.config`
   - Without this, our runs for this workshop would fail because we do not have the workflow tools (eg STAR, salmon) installed locally on our VMs
-- Over-riding the default values for CPUs and memory set in `nextflow.config` with `--max_cpus 2` and `--max_memory 6.GB` to fit on our small VMs
+- Over-riding the default values for CPUs and memory set in `nextflow.config` with `--max_cpus 2` and `--max_memory 6.GB` to fit within our interactive sessions
   - Without these parameters, our runs would fail at the first process that requests more than this, because Nextflow workflows check that the requested resources are available before attempting to execute a workflow  
 
 These are basic configurations. What if:
@@ -413,29 +405,6 @@ These are basic configurations. What if:
 - We wanted to use a non-default software container? 
 - We wanted to customise outputs beyond what was possible with the nf-core workflow parameters?
  
-
-:bulb: <span style="color:#000080;"> This is all possible with custom configuration files!</span>
-
-The rest of lesson 2.1 will explore custom **resource** configuration files, while [lesson2.4](2.4_multiConfig.html) will focus on **customising outputs**. We won't be covering custom workflow execution on HPCs in this workshop, but please check out our [tips and tricks](../tips_tricks.html#run-nextflow-on-hpc) page later if you are interested in this!
-
-
-::: {.callout-note collapse="true"}
-### Singularity options
-Nextflow has a number of [options for using Singularity](https://www.nextflow.io/docs/latest/config.html?highlight=singularity#scope-singularity) that allow you to control how containers are executed. We are using:
-
-* `enabled` to use Singularity to manage containers automatically 
-* `autoMounts` to allow Nextflow to automatically mount host paths when a container is executed
-* `cacheDir` to specify the directory Singularity images can be pulled from 
-:::
-
-```default
-singularity {
-    enabled     = true
-    autoMounts  = true
-    cacheDir    = '/config/binaries/singularity/containers_devel/nextflow'
-}
-
-```
 
 ### **2.1.7. Custom resource configuration using process labels**
 
@@ -453,7 +422,7 @@ Optimisation for this platform might for example set `max_cpus` to 8 so two samp
 
 The next two lessons will demonstrate how to achieve this using custom configuration files that fine-tune resources using `process labels` to assign the same resources to groups of processes sharing the same label, or `withName` to target specific processes. 
 
-In order to do this, we need to use the `process` scope. Nextflow has a number of different [`scopes`](https://www.nextflow.io/docs/latest/config.html) that can be included in configuration files, for example the `params` scope you covered in [lesson 1.3](1.3_configure.html) and applied to your config in lesson 2.3.3.
+In order to do this, we need to use the `process` scope. Nextflow has a number of different [`scopes`](https://www.nextflow.io/docs/latest/config.html) that can be included in configuration files, for example the `params` scope you covered in [lesson 1.2.5](1.2_intro_nf_core.qmd) and applied to your config in lesson 2.1.7.
 
 Within the `process` scope, we can configure resources and additional arguments for processes.
 
@@ -495,7 +464,7 @@ Save the file then re-run the workflow with our custom configuration, setting `o
 
 ::: callout-warning
 ### Before executing this run command
-If you haven't done so already, check that the run from lession 2.3.3 has completed successfully.
+If you haven't done so already, check that the run from lession 2.1.3 has completed successfully.
 
 You run should have a summary message similar to below:
 
@@ -516,12 +485,12 @@ fastqc  multiqc  pipeline_info  star_salmon  trimgalore
 
 ```default
 nextflow run nf-core/rnaseq -r 3.11.1 \
+  -profile singularity
   -c my_resources.config \
   -params-file workshop-params.yaml \
-  --outdir Lesson-2.3.4 \
+  --outdir Lesson-2.1.7 \
   -resume 
 ```
-
 :eyes: Notice that the **Max job request options** are no longer listed on the run log printed to screen, because we are setting them within the `process` scope rather than `params` scope.
 
 
@@ -551,34 +520,15 @@ This exercise will demonstrate how to adjust the resource configurations for a s
 
 To utilise `withName`, we first need to ensure we have the correct and specific **executuion path** for the module/modules that we wish to target.
 
- Identify the execution path for the STAR_ALIGN module:
+Identify the execution path for the STAR_ALIGN module:
 
 ::: {.callout-note}
 ### Finding the module execution path
-Recall from [lesson 1.2.5](1.2_intro_nf_core.html#default-configuration-files) the following tips: 
-
 - The extended execution path is built from the pipeline, workflow, subworkflow, and module names
-- It can be tricky to evaluate the path used to execute a module. If you are unsure of how to build the path you can copy it from the `workflow/conf/modules.config` file
+- It can be tricky to evaluate the path used to execute a module. If you are unsure of how to build the path you can copy it from the  [view the modules.conf file on Github](https://github.com/nf-core/rnaseq/blob/3.11.1/conf/modules.config)
 :::
 
-You can [view the modules.conf file on Github](https://github.com/nf-core/rnaseq/blob/3.11.1/conf/modules.config) or search your local copy:
-
-
-```default
-withName: 'UNTAR_.*|STAR_GENOMEGENERATE|STAR_GENOMEGENERATE_IGENOMES|HISAT2_BUILD' {
-// STAR Salmon alignment options
-        withName: '.*:ALIGN_STAR:STAR_ALIGN|.*:ALIGN_STAR:STAR_ALIGN_IGENOMES' {
-        withName: '.*:QUANTIFY_STAR_SALMON:SALMON_QUANT' {
-        withName: '.*:QUANTIFY_STAR_SALMON:SALMON_TX2GENE' {
-        withName: '.*:QUANTIFY_STAR_SALMON:SALMON_TXIMPORT' {
-        withName: '.*:QUANTIFY_STAR_SALMON:SALMON_SE_.*' {
-            withName: 'DESEQ2_QC_STAR_SALMON' {
-// STAR RSEM alignment options
-```
-<br/><br/>
-
 ::: {.callout-note}
-### 
 - Note that this does not provide the PIPELINE or WORKFLOW name at the front of the path.  You can add these manually (eg `PIPELINE` is NFCORE_RNASEQ and `WORKFLOW` is RNASEQ) but the path within `modules.config` is usually all that is required for specificity within a workflow
 - If you have previously run the pipeline, you could also extract the complete module execution path from your run log printed to screen, or the execution trace, timeline or report files within `<outdir>/pipeline_info` 
 :::
@@ -618,12 +568,6 @@ process {
 ### Completed config file
 
 ```default
-singularity {
-    enabled = true
-    autoMounts = true
-    cacheDir = '/config/binaries/singularity/containers_devel/nextflow'
-}
-
 process {
     withLabel: process_low {
         cpus = 2
@@ -649,7 +593,7 @@ Save the config then resume your run, setting `outdir` to `Lesson-2.1.7`, once a
 
 ```default
 nextflow run nf-core/rnaseq -r 3.11.1 \
-  -profile workshop \
+  -profile singularity \
   -c my_resources.config \
   -params-file workshop-params.yaml \
   --outdir Lesson-2.1.7 \
@@ -676,12 +620,53 @@ WARN: There's no process matching config selector: .*:RNASEQ:ALIGN_STAR:STARALIG
 ```
 :::
 
+::: callout-tip
+### **Challenge**{.unlisted}
+Change the container used by mulitqc to `biocontainers/multiqc:1.7--py_0` using the `withName` scope in your `my_resources.config`
+:::
+
+::: {.callout-caution collapse="true"}
+### Solution
+
+`my_resources.config`
+```default
+process {
+    withLabel: process_low {
+        cpus = 2
+        memory = 6.GB
+    }
+    withLabel: process_medium {
+        cpus = 2
+        memory = 6.GB
+    } 
+    withLabel: process_high {
+        cpus = 2
+        memory = 6.GB
+    }
+    withName: '.*:MULTIQC' {
+        container = "biocontainers/multiqc:1.17--pyhdfd78af_1"
+    }
+}
+```
+
+Run the pipeline
+```default
+nextflow run nf-core/rnaseq -r 3.11.1 \
+  -profile singularity \
+  -c my_resources.config \
+  -params-file workshop-params.yaml \
+  --outdir Lesson-2.1.7 \
+  -resume 
+```
+
+:::
+
+
 ::: {.callout-note}
 ### **Key points**
 - nf-core workflows work 'out of the box' but there are compute and software configurations we should customise for our runs to work well on our compute infrastructure
-- nf-core executes by default with `workflow/nextflow.config` and `workflow/conf/base.config` and has a repository of community-contributed institutional conmedia that ship with the workflow 
-- we can write (and contribute) our own institutional config for reproducible runs on our compute platform 
-- custom conmedia can be applied to a run with `-c <config_name>`, and will over-ride settings in the default conmedia
+- nf-core executes by default with `workflow/nextflow.config` and `workflow/conf/base.config` and has a repository of community-contributed institutional config that ship with the workflow 
+- custom config can be applied to a run with `-c <config_name>`, and will over-ride settings in the default config
 - customisations can be targeted to specific processes using `withLabel` or `withName`
 - workflow parameters belong in `-params-file <params_file>` and not `-c <custom_config>`
 :::
