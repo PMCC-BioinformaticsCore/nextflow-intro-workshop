@@ -11,8 +11,8 @@ from: markdown+emoji
 ### Objectives{.unlisted}
 
 - Learn about the core features of nf-core.
-- Learn how to use nf-core tooling.
-- Use Nextflow to pull the `nf-core/rnaseq` workflow
+- Learn the terminology used by nf-core.
+- Use Nextflow to pull and run the `nf-core/testpipeline` workflow
 
 :::
 
@@ -81,9 +81,20 @@ nextflow run nf-core/<pipeline>
 Nextflow will `pull` the default git branch if a workflow version is not specified. This will be the master branch for nf-core workflows with a stable release. nf-core workflows use GitHub releases to tag stable versions of the code and software. You will always be able to execute a previous version of a workflow once it is released using the `-revision` or `-r` flag.
 
 For this section of the workshop we will be using the `nf-core/testpipeline` as an example.
+
+As we will be running some bioinformatics tools, we will need to make sure of the following:
+
+- We are not running on login node
+- singularity module is loaded (`module load singularity/3.7.3`)
+
+We will also create a separate output directory for this section. 
+```default
+cd /scratch/users/<your-username>/nfWorkshop; mkdir ./lesson1.2 && cd $_
+```
+
 The base command we will be using for this section is:
 ```default
-nextflow run nf-core/testpipeline -profile test,singularity --outdir Lesson1_2
+nextflow run nf-core/testpipeline -profile test,singularity --outdir my_results
 ```
 
 ### **1.2.3. Workflow structure**
@@ -180,7 +191,7 @@ Give the MultiQC report for the `nf-core/testpipeline` workflow the name of your
 Add the `--multiqc_title` flag to your command and execute it. Use the `-resume` option to save time:
 
 ```default
-nextflow run nf-core/testpipeline -profile test,singularity --multiqc_title koala --outdir Lesson1_2
+nextflow run nf-core/testpipeline -profile test,singularity --multiqc_title koala --outdir my_results -resume
 ```
 :::
 
@@ -215,7 +226,7 @@ Scopes allow you to quickly configure settings required to deploy a workflow on 
 
 ### **Challenge**{.unlisted}
 
-Give the MultiQC report for the `nf-core/testpipeline` workflow the name of your favorite color using the [`multiqc_title`](https://github.com/nf-core/testpipeline/blob/master/nextflow.config#L27) parameter in a custom `.config` file:
+Give the MultiQC report for the `nf-core/testpipeline` workflow the name of your favorite color using the [`multiqc_title`](https://github.com/nf-core/testpipeline/blob/master/nextflow.config#L27) parameter in a custom `my_custom.config` file:
 
 :::
 
@@ -223,7 +234,7 @@ Give the MultiQC report for the `nf-core/testpipeline` workflow the name of your
 
 ### Solution
 
-Create a custom `.config` file that contains your favourite colour, e.g., blue:
+Create a custom `my_custom.config` file that contains your favourite colour, e.g., blue:
 
 ```default
 params{
@@ -234,7 +245,7 @@ params{
 Include the custom `.config` file in your execution command with the `-c` option:
 
 ```default
-nextflow run nf-core/testpipeline -resume -c my_custom_config.config
+nextflow run nf-core/testpipeline --outdir my_results -profile test,singularity -resume -c my_custom.config
 ```
 
 Check that it has been applied:
@@ -245,7 +256,7 @@ ls my_results/multiqc/
 
 **Why did this fail?**
 
-You **can not** use the `params` scope in custom configuration files. Parameters can only be configured using the `-params-file` option and the command line. While it parameter is listed as a parameter on the `STDOUT`, it **was not** applied to the executed command.
+You **can not** use the `params` scope in custom configuration files. Parameters can only be configured using the `-params-file` option and the command line. While parameter is listed as a parameter on the `STDOUT`, it **was not** applied to the executed command.
 
 We will revisit this at the end of the module
 
@@ -452,13 +463,14 @@ nextflow run nf-core/testpipeline -profile test,singularity --params-file my_par
 
 :::
 
-
+::: {.callout-note}
 ### **Key points**
 
 - nf-core is a community effort to collect a curated set of analysis workflows built using Nextflow.
 - Nextflow can be used to `pull` nf-core workflows.
 - nf-core workflows follow similar structures
 - nf-core workflows are configured using parameters and profiles
+:::
 
 ---
 ^*These materials are adapted from [Customising Nf-Core Workshop](https://sydney-informatics-hub.github.io/customising-nfcore-workshop/notebooks/1.2_nfcore.html) by Sydney Informatics Hub*^
