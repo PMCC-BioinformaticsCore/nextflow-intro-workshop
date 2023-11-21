@@ -244,7 +244,7 @@ nextflow run nf-core/rnaseq -r 3.11.1 \
     --fasta $materials/ref/chr22_with_ERCC92.fa \
     --gtf $materials/ref/chr22_with_ERCC92.gtf \
     -profile singularity \
-    --skip_markduplicates \
+    --skip_markduplicates true \
     --save_trimmed true \
     --save_unaligned true \
     --max_memory '6.GB' \
@@ -308,6 +308,25 @@ As each job is run, a unique sub-directory is created in the `work` directory. T
 #### The `Lesson-2.1` directory
 
 All final outputs will be presented in a directory specified by the `--outdir` flag. 
+
+
+::: callout-tip
+### Challenge{.unlisted}
+Convert the parameter definitions into a YAML file, `workshop-params.yml`, compatible with `--params-file`
+:::
+
+::: {.callout-caution collapse="true"}
+### Solution
+```default
+gtf: "/data/seqliner/test-data/rna-seq/ref/chr22_with_ERCC92.gtf"
+fasta: "/data/seqliner/test-data/rna-seq/ref/chr22_with_ERCC92.fa"
+skip_markduplicates: "true"
+save_trimmed: "true"
+save_unaligned: "true"
+max_memory: "6.GB" 
+max_cpus: 2
+```
+:::
 
 ::: {.callout-note}
 ### **Key points**
@@ -414,37 +433,6 @@ singularity {
     cacheDir    = '/config/binaries/singularity/containers_devel/nextflow'
 }
 
-```
-<br/><br/>
-
-Now let's address those two resource parameters `--max_memory 6.GB` and `--max_cpus 2`. At the same level as the `singularity` scope, add a `params` scope and specify each parameter underneath: 
-
-::: {.callout-important collapse=true}
-### :skull_and_crossbones: <span style="color:#8b0000;">No nf-core params in custom conmedia!</span>
- When customising nf-core workflows, <span style="color:#8b0000;">**do not add parameters to custom config files!**</span> The case of `max` resource settings is a <span style="color:#8b0000;">**rare exception**</span> to this rule.
-
-```default
-params {
-    max_cpus   = 2
-    max_memory = 6.GB      
-}
-```
-
-Add finally, add a profile description using the `config_profile_description` parameter:
-
-::: {.callout-warning}
-### Another parameter within a custom config?!
-:speech_balloon: **But I thought that was not allowed?**
-
-Kudos for remembering! It's an important lesson. **Workflow parameters** should definitely *not* be in custom config files. **Resource configurations** on the other hand can have exceptions. Here we are setting resources so that our runs can execute on our environment, and giving the configuration profile that sets them a descriptive name.
-:::
-
-```default
-params {
-    config_profile_description  = 'test_resources'
-    max_cpus   = 2
-    max_memory = 6.GB      
-}
 ```
 
 ### **2.1.7. Custom resource configuration using process labels**
