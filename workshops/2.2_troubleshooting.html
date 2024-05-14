@@ -494,7 +494,7 @@ And we now need to find the specific hidden<code>.command.sh</code> for Salmon t
 <span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a>    -a HBR_Rep1_ERCC.Aligned.toTranscriptome.out.bam \</span>
 <span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a>     \</span>
 <span id="cb26-9"><a href="#cb26-9" aria-hidden="true" tabindex="-1"></a>    -o HBR_Rep1_ERCC</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<p>Looking at the nf-core/rnaseq Parameter documentation and Salmon documentation, we found that we can override this default using the <code>--salmon_quant_libtype U</code> <a href="https://nf-co.re/rnaseq/3.11.1/parameters#salmon_quant_libtype">parameter</a> to indicate our data is unstranded and override <code>samplesheet.csv</code> input.</p>
+<p>Looking at the nf-core/rnaseq Parameter documentation and Salmon documentation, we found that we can override this default using the <code>--salmon_quant_libtype A</code> <a href="https://nf-co.re/rnaseq/3.11.1/parameters#salmon_quant_libtype">parameter</a> to indicate our data is unstranded and override <code>samplesheet.csv</code> input.</p>
 <div class="callout callout-style-default callout-note callout-titled">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
@@ -523,7 +523,7 @@ And we now need to find the specific hidden<code>.command.sh</code> for Salmon t
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>Fill in the parameters file below and save as <code>workshop-params.yaml</code>. This time, include the <code>--salmon_quant_libtype U</code> parameter.</p>
+<p>Fill in the parameters file below and save as <code>workshop-params.yaml</code>. This time, include the <code>--salmon_quant_libtype A</code> parameter.</p>
 <p><span class="emoji" data-emoji="bulb">💡</span> YAML formatting tips!</p>
 <ul>
 <li>Strings need to be inside double quotes</li>
@@ -538,7 +538,7 @@ And we now need to find the specific hidden<code>.command.sh</code> for Salmon t
 <span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a><span class="fu">skip_markduplicates</span><span class="kw">:</span><span class="at"> </span></span>
 <span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a><span class="fu">save_trimmed</span><span class="kw">:</span><span class="at"> </span></span>
 <span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a><span class="fu">save_unaligned</span><span class="kw">:</span><span class="at"> </span></span>
-<span id="cb27-10"><a href="#cb27-10" aria-hidden="true" tabindex="-1"></a><span class="fu">salmon_quant_libtype</span><span class="kw">:</span><span class="at"> </span><span class="st">"U"</span><span class="at"> </span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb27-10"><a href="#cb27-10" aria-hidden="true" tabindex="-1"></a><span class="fu">salmon_quant_libtype</span><span class="kw">:</span><span class="at"> </span><span class="st">"A"</span><span class="at"> </span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </div>
 </section>
