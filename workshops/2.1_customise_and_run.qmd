@@ -626,7 +626,7 @@ WARN: There's no process matching config selector: .*:RNASEQ:ALIGN_STAR:STARALIG
 
 ::: callout-tip
 ### **Challenge**{.unlisted}
-Change the container used by mulitqc to `biocontainers/multiqc:1.7--py_0` using the `withName` scope in your `my_resources.config`
+Change the container used by multiqc to `quay.io/biocontainers/multiqc:1.14--pyhdfd78af_0` using the `withName` scope in your `my_resources.config`
 :::
 
 ::: {.callout-caution collapse="true"}
@@ -648,7 +648,7 @@ process {
         memory = 6.GB
     }
     withName: '.*:MULTIQC' {
-        container = "biocontainers/multiqc:1.14--pyhdfd78af_0"
+        container = "quay.io/biocontainers/multiqc:1.14--pyhdfd78af_0"
     }
 }
 ```
