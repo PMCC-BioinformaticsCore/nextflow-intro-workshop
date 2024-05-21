@@ -1,0 +1,545 @@
+---
+title: "**Creating a Nextflow Workflow Script**"
+output:
+  html_document:
+    toc: false
+    toc_float: false
+from: markdown+emoji
+---
+
+::: callout-tip
+
+### Objectives{.unlisted}
+
+- Develop a basic Nextflow workflow consisting of processes that use multiple scripting languages
+- Gain an understanding of Groovy and Nextflow syntax
+- Read data of different types into a Nextflow workflow
+
+:::
+
+### **1.1.1. Environment Setup**
+
+Clone the training materials repository on GitHub:
+```default
+git clone https://github.com/nextflow-io/training.git
+```
+
+Set up an interactive shell to run our Nextflow workflow: 
+
+``` default
+srun --pty -p prod_short --mem 8GB --mincpus 2 -t 0-2:00 bash
+```
+
+Load the required modules to run Nextflow:
+
+``` default
+module load nextflow/23.04.1
+module load singularity/3.7.3
+```
+
+Make sure to always use version 23 and above, as we have encountered problems running nf-core workflows with older versions. 
+
+Since we are using a shared storage, we should consider including common shared paths to where software is stored. These variables can be accessed using the `NXF_SINGULARITY_CACHEDIR` or the `NXF_CONDA_CACHEDIR` environment variables. 
+
+Currently we set the singularity cache environment variable:
+
+```default
+export NXF_SINGULARITY_CACHEDIR=/config/binaries/singularity/containers_devel/nextflow
+```
+
+Singularity images downloaded by workflow executions will now be stored in this directory.
+
+You may want to include these, or other environmental variables, in your `.bashrc` file (or alternate) that is loaded when you log in so you don’t need to export variables every session. A complete list of environmental variables can be found [here](https://www.nextflow.io/docs/latest/config.html#environment-variables).
+
+<br/>
+
+
+### **1.1.2. Define Workflow Parameters**
+
+A Nextflow workflow script contains the processes and the order of execution of each process. 
+
+Let's create a Nextflow script `rnaseq.nf` for a RNA-seq workflow. The code begins with a shebang, which declares Nextflow as the interpreter. 
+
+```default
+#!/usr/bin/env nextflow
+```
+<br/>
+
+One way to define the workflow parameters is inside the Nextflow script.
+
+```default
+params.reads = "/.../training/nf-training/data/ggal/gut_{1,2}.fq"
+params.transcriptome_file = "/.../training/nf-training/data/ggal/transcriptome.fa"
+params.multiqc = "/.../training/nf-training/multiqc"
+
+println "reads: $params.reads"
+println 'reads: $params.reads'
+```
+
+Workflow parameters can be defined and accessed inside the Nextflow script by prepending the prefix `params` to a variable name, separated by a dot character, eg. `params.reads`.
+
+Different data types can be assigned as a parameter in Nextflow. The `reads` parameter is defined as two files, `/.../training/nf-training/data/ggal/gut_1.fz` and `/.../training/nf-training/data/ggal/gut_2.fq`. The `transcriptome_file` parameter is defined as one file, `/.../training/nf-training/data/ggal/transcriptome.fa`. The `multiqc` parameter is defined as a directory, `/.../training/nf-training/data/ggal/multiqc`. 
+
+We are then using the Groovy `println` command to print the contents of the `reads` parameter. Similar to Bash, the `$` character is required to access the vaue of the parameter. Additionally, while double-quoted strings allow variable interpolation, single-quoted strings do not. 
+
+Run the script:
+```default
+nextflow run rnaseq.nf
+```
+
+<br/>
+
+
+DELETE
+
+
+2. Define the parameters in a params.yaml file
+
+params.yaml:
+```default
+"reads" : training/nf-training/data/ggal/lung_{1,2}.fq
+"transcriptome_file" : training/nf-training/data/ggal/transcriptome.fa
+"multiqc" : training/nf-training/multiqc
+
+```
+
+Run the script, specifying the `-params-file`
+```default
+nextflow run rnaseq.nf -params-file params.yaml
+```
+<br/>
+
+3. Define the parameters on the command line
+
+Parameters can be specified on the command line, by prefixing the parameter name with a double dash character:
+```default
+nextflow run rnaseq.nf \
+-params-file params.yaml \
+--reads "training/nf-training/data/ggal/liver_{1,2}.fq"
+```
+
+Parameters defined inside the Nextflow script take the lowest priority, followed by parameters defined in the `params.yaml`, with parameters defined on the command line having the highest priority. 
+
+
+DELETE
+
+
+<br/>
+
+
+### **1.1.3. Create a transcriptome index file**
+
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+
+ADD STUFF ABOUT TASK.CPUS???
+
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+
+
+Commands or scripts can be executed inside a `process`, which contains three main declarations: `input`, `output`, and `script`. 
+
+```default
+process INDEX {
+    input:
+    path transcriptome
+
+    output:
+    path "salmon_idx"
+
+    script:
+    """
+    salmon index --threads $task.cpus -t $transcriptome -i salmon_idx
+    """
+}
+```
+The `INDEX` process takes an input path, and assigns that input as the variable `transcriptome`. The `path` type qualifier allows file paths to be provided to the process execution. Nextflow will stage the files in the process execution directory, and they can be accessed by the script via the defined variable name, ie. `transcriptome`. The code between the three double-quotes of the script block will be executed, and accesses the input `transcriptome` variable using `$`. The output is a path, with a filename `salmon_idx`. The output path can also be defined using glob pattern matching, eg. `path "*_idx"`.
+
+It's worth noting that in this example, the name of the input file is not used and is only referenced to by the input variable name. This feature allows pipeline tasks to be self-contained and decoupled from the execution environment. As best practice, avoid referencing files that are not defined in the process script. 
+
+To execute the `INDEX` process, a workflow scope will need to be added to our script.
+
+```default
+workflow {
+  index_ch = INDEX(params.transcriptome_file)
+}
+```
+
+Here, the `params.transcriptome_file` parameter we defined earlier in the Nextflow script is used as an input into the INDEX process. This input is assigned the variable `transcriptome` locally within the INDEX process, and uses the salmon tool to create `salmon_index`, an indexed transcriptome that is passed as an output. This output is assigned to the `index_ch` channel.
+
+Run the Nextflow script:
+```default
+nextflow run rnaseq.nf
+```
+
+Error executing process:
+
+```default
+ERROR ~ Error executing process > 'INDEX'
+
+Caused by:
+  Process `INDEX` terminated with an error exit status (127)
+
+Command executed:
+
+  salmon index --threads 1 -t transcriptome.fa -i salmon_index
+
+Command exit status:
+  127
+
+Command output:
+  (empty)
+
+Command error:
+  .command.sh: line 2: salmon: command not found
+
+Work dir:
+  /.../work/85/495a21afcaaf5f94780aff6b2a964c
+
+Tip: you can try to figure out what's wrong by changing to the process work dir and showing the script file named `.command.sh`
+
+ -- Check '.nextflow.log' file for details
+```
+When a process execution exits with a non-zero exit status, the workflow will be stopped. Nextflow will output the cause of the error, the command that caused the error, the exit status, the standard output (if available), the comand standard error, and the work directory where the process was executed. 
+
+Let's first look inside the process execution directory:
+
+```default
+>>> ls -a /.../work/85/495a21afcaaf5f94780aff6b2a964c 
+
+.   .command.begin  .command.log  .command.run  .exitcode
+..  .command.err    .command.out  .command.sh   transcriptome.fa
+```
+
+We can see that the input file `transcriptome.fa` has been staged inside this process execution directory by being sym-linked. This allows it to be accessed by the script. 
+
+Inside the `.command.err` script, we can see that the `salmon` command was not found, resulting in the termination of the Nextflow workflow. 
+
+1. Load the salmon module inside the script block
+
+```default
+process INDEX {
+    input:
+    path transcriptome
+
+    output:
+    path "salmon_idx"
+
+    script:
+    """
+    module purge
+    module load salmon/1.3.0
+
+    salmon index --threads $task.cpus -t $transcriptome -i salmon_idx
+    """
+}
+```
+The script block is executed as a Bash script, and can be any command or script normally executed on the command line. If there is a module present in the host environment, it can be loaded as part of the process execution. 
+
+Run the Nextflow script:
+```default
+nextflow run rnaseq.nf
+```
+
+<br/>
+
+2. Specify a container containing the salmon package
+
+Create a config file: `nextflow.config`
+
+Singularity can be used to run container images that contains the software of interest. Singularity isn't enabled by default, and needs to be enabled by setting `enabled = true`. When containers are used in Nextflow, the path binding also needs to be enabled, since containers run in a separate file system. This can be done by setting `autoMounts = true`, which will mount data paths defined system wide to the container. The singularity container cache directory can also be set, using `cacheDir`. 
+
+```default
+singularity {
+  enabled = true
+  autoMounts = true
+  cacheDir = "/config/binaries/singularity/containers_devel/nextflow"
+}
+```
+
+The `withName` process selector allows a container to be specified for just the `INDEX` process. Using `withName` allows different containers to be provided to different processes. The `container` process directive is used to specify the container to be used for that process. For a full list of process directives that can be specified, see [here](https://www.nextflow.io/docs/latest/process.html#directives).
+
+```default
+process {
+  withName: INDEX {
+    container = "/config/binaries/singularity/containers_devel/nextflow/depot.galaxyproject.org-singularity-salmon-1.10.1--h7e5ed60_0.img"
+  }
+}
+```
+
+Now that the container is specified within the `nextflow.config` file, the `INDEX` process in `rnaseq.nf` becomes: 
+
+```default
+process INDEX {
+    input:
+    path transcriptome
+
+    output:
+    path "salmon_idx"
+
+    script:
+    """
+    salmon index --threads $task.cpus -t $transcriptome -i salmon_idx
+    """
+}
+```
+
+Run the Nextflow script:
+```default
+nextflow run rnaseq.nf
+```
+
+The newly created `nextflow.config` files does not need to be specified in the `nextflow run` command. This file is automatically searched for and used by Nextflow. 
+
+### **1.1.4. Collect Read Files By Pairs**
+
+
+
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+
+
+add recap on what channel is
+
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+
+Currently, we have defined the `reads` parameter as a string:
+
+```default
+params.reads = "/.../training/nf-training/data/ggal/gut_{1,2}.fq"
+```
+
+To group the `reads` parameter, the `fromFilePairs` channel factory can be used. Add the following to the `workflow` block and run the workflow:
+
+```default
+reads_ch = Channel.fromFilePairs("$params.reads")
+reads_ch.view()
+```
+
+The `reads` parameter is being converted into a file pair group using `fromFilePairs`, and is assigned to `reads_ch`. The `reads_ch` consists of a tuple of two items -- the first is the grouping key of the matching pair (gut), and the second is a list of paths to each file:
+
+```default
+[gut, [/.../training/nf-training/data/ggal/gut_1.fq, /.../training/nf-training/data/ggal/gut_2.fq]]
+```
+
+Glob patterns can also be used to create channels of file pair groups. Inside the data directory, we have pairs of gut, liver, and lung files that can all be read into `reads_ch`. 
+
+```default
+>>> ls "/.../training/nf-training/data/ggal/"
+
+gut_1.fq  gut_2.fq  liver_1.fq  liver_2.fq  lung_1.fq  lung_2.fq  transcriptome.fa
+```
+
+Run the `rnaseq.nf` workflow specifying all `.fq` files inside `/.../training/nf-training/data/ggal/` as the `reads` parameter via the command line:
+
+```default
+nextflow run rnaseq.nf --reads '/.../training/nf-training/data/ggal/*_{1,2}.fq'
+```
+File paths that include one or more wildcards (ie. `*`, `?`, etc.) MUST be wrapped in single-quoted characters to avoid Bash expanding the glob on the command line. 
+
+The `reads_ch` now contains three tuple elements with unique grouping keys:
+
+```default
+[gut, [/.../training/nf-training/data/ggal/gut_1.fq, /.../training/nf-training/data/ggal/gut_2.fq]]
+[liver, [/.../training/nf-training/data/ggal/liver_1.fq, /.../training/nf-training/data/ggal/liver_2.fq]]
+[lung, [/.../training/nf-training/data/ggal/lung_1.fq, /.../training/nf-training/data/ggal/lung_2.fq]]
+```
+
+The grouping key metadata can also be explicitly created without having to rely on file names, using the `map` channel operator. Let's start by creating a samplesheet `rnaseq_samplesheet.csv` with column headings `sample_name`, `fastq1`, and `fastq2`, and fill in a custom `sample_name`, along with the paths to the `.fq` files.
+
+```default
+sample_name,fastq1,fastq2
+gut_sample,/.../training/nf-training/data/ggal/gut_1.fq,/.../training/nf-training/data/ggal/gut_2.fq
+liver_sample,/.../training/nf-training/data/ggal/liver_1.fq,/.../training/nf-training/data/ggal/liver_2.fq
+lung_sample,/.../training/nf-training/data/ggal/lung_1.fq,/.../training/nf-training/data/ggal/lung_2.fq
+```
+
+Let's now supply the path to `rnaseq_samplesheet.csv` to the `reads` parameter in `rnaseq.nf`. 
+
+```default
+params.reads = "/.../rnaseq_samplesheet.csv"
+```
+
+Previously, the `reads` parameter consisted of a string of the `.fq` files directly. Now, it is a string to a `.csv` file containing the `.fq` files. Therefore, the channel factory method that reads the input file also needs to be changed. Since the parameter is now a single file path, the `fromPath` method can first be used, which creates a channel of `Path` type object. The `splitCsv` channel operator can then be used to parse the contents of the channel. 
+
+```default
+reads_ch = Channel.fromPath(params.reads)
+reads_ch.view()
+
+reads_ch = reads_ch.splitCsv(header:true)
+reads_ch.view()
+```
+
+When using `splitCsv` in the above example, `header` is set to `true`. This will use the first line of the `.csv` file as the column names. Let's run the pipeline containing the new input parameter.
+
+```default
+>>> nextflow run rnaseq.nf
+
+N E X T F L O W  ~  version 23.04.1
+Launching `rnaseq.nf` [distraught_avogadro] DSL2 - revision: 525e081ba2
+reads: rnaseq_samplesheet.csv
+reads: $params.reads
+executor >  local (1)
+[4e/eeae2a] process > INDEX [100%] 1 of 1 ✔
+/.../rnaseq_samplesheet.csv
+[sample_name:gut_sample, fastq1:/.../training/nf-training/data/ggal/gut_1.fq, fastq2:/.../training/nf-training/data/ggal/gut_2.fq]
+[sample_name:liver_sample, fastq1:/.../training/nf-training/data/ggal/liver_1.fq, fastq2:/.../training/nf-training/data/ggal/liver_2.f]
+[sample_name:lung_sample, fastq1:/.../training/nf-training/data/ggal/lung_1.fq, fastq2:/.../training/nf-training/data/ggal/lung_2.fq]
+
+```
+
+The `/.../rnaseq_samplesheet.csv` is the output of `reads_ch` directly after the `fromPath` channel factory method was used. Here, the channel is a `Path` type object. After invoking the `splitCsv` channel operator, the `reads_ch` is now replaced with a channel consisting of three elements, where each element is a row in the `.csv` file, returned as a list. Since `header` was set to `true`, each element in the list is also mapped to the column names. This can be used when creating the custom grouping key. 
+
+To create grouping key metadata from the list output by `splitCsv`, the `map` channel operator can be used.
+
+```default
+  reads_ch = reads_ch.map { row -> 
+      grp_meta = "$row.sample_name"
+      [grp_meta, [row.fastq1, row.fastq2]]
+      }
+  reads_ch.view()
+```
+Here, for each list in `reads_ch`, we assign it to a variable `row`. We then create custom grouping key metadata `grp_meta` based on the `sample_name` column from the `.csv`, which can be accessed via the `row` variable by `.` separation. After the custom metadata key is assigned, a tuple is created by assigning `grp_meta` as the first element, and the two `.fq` files as the second element, accessed via the `row` variable by `.` separation.
+
+Let's run the pipeline containing the custom grouping key: 
+
+```default
+>>> nextflow run rnaseq.nf
+
+N E X T F L O W  ~  version 23.04.1
+Launching `rnaseq.nf` [happy_torricelli] DSL2 - revision: e9e1499a97
+reads: rnaseq_samplesheet.csv
+reads: $params.reads
+[-        ] process > INDEX -
+[gut_sample, [/.../training/nf-training/data/ggal/gut_1.fq, /.../training/nf-training/data/ggal/gut_2.fq]]
+[liver_sample, [/home/sli/test/training/nf-training/data/ggal/liver_1.fq, /.../training/nf-training/data/ggal/liver_2.fq]]
+[lung_sample, [/.../training/nf-training/data/ggal/lung_1.fq, /.../training/nf-training/data/ggal/lung_2.fq]]
+```
+
+The custom grouping key can be created from multiple values in the samplesheet. For example, `grp_meta = [sample : row.sample_name , file : row.fastq1]` will create the metadata key using both the `sample_name` and `fastq1` file names. The samplesheet can also be created to include multiple sample characteristics, such as `lane`, `data_type`, etc. Each of these characteristics can be used to ensure an adequte grouping key is creaed for that sample. 
+
+
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+
+at start:
+
+add why is grouping important
+
+add more info on tuple type input
+
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+
+
+### **1.1.5. Perform Expression Quantification**
+
+Let's add a new process `QUANTIFICATION` that uses both the indexed transcriptome file and the RNA `.fq` file pairs to execute `salmon quant` command. 
+
+```default
+process QUANTIFICATION {
+    input:
+    path salmon_index
+    tuple val(sample_id), path(reads)
+
+    output:
+    path "$sample_id"
+
+    script:
+    """
+    salmon quant --threads $task.cpus --libType=U \
+    -i $salmon_index -1 ${reads[0]} -2 ${reads[1]} -o $sample_id
+    """
+}
+```
+The `QUANTIFICATION` process takes two inputs, the first is the path to the `salmon_index` created from the `INDEX` process. The second input is set to match the structure of the `map` channel operator -- a tuple where the first element is a value (ie. grouping key), and the second element is a list of paths to the `.fq` reads. 
+
+In the script block, the `salmon quant` command saves the output of the tool as `$sample_id`. This output is emitted by the `QUANTIFICATION` process, using `$` to access the Nextflow variable. 
+
+To run the `QUANTIFICATION` process, let's add it to the end of the `workflow` block, and emit the outputs as `quant_ch`:
+
+```default
+quant_ch = QUANTIFICATION(index_ch, reads_ch)
+```
+
+Before we can run the new process, we need to define a container that contains the `salmon` tool, inside `nextflow.config`. 
+```default
+withName: QUANTIFICATION {
+  container = "/config/binaries/singularity/containers_devel/nextflow/depot.galaxyproject.org-singularity-salmon-1.10.1--h7e5ed60_0.img"
+  }
+```
+
+Since the first `INDEX` step has already completed successfully, we can add `-resume` to the Nextflow run command:
+
+```default
+nextflow run rnaseq.nf -resume
+```
+
+In the Nextflow output, we can see that the `INDEX` process was cached, and the `QUANTIFICATION` process has been ran three times. Recall that the `reads_ch`, which contains grouped file pairs from `rnaseq_samplesheet.csv`, consists of three elements. Nextflow will automatically run the `QUANTIFICATION` process on each of the elements in the input channel, creating separate process execution work directories for each execution. 
+
+```default
+N E X T F L O W  ~  version 23.04.1
+Launching `rnaseq.nf` [fervent_morse] DSL2 - revision: b245b71afa
+reads: /.../training/nf-training/data/ggal/*_{1,2}.fq
+reads: $params.reads
+executor >  local (3)
+[fc/384aa5] process > INDEX              [100%] 1 of 1, cached: 1 ✔
+[72/38fc1f] process > QUANTIFICATION (3) [100%] 3 of 3 ✔
+```
+
+### **1.1.6. Quality Control**
+
+Now, let's implement a `FASTQC` quality control process for the input fastq reads.  PYTHON FASTQ
+
+
+https://pypi.org/project/sequana-fastqc/ 
+
+
+
+Stuff on accessing nf variables vs variables inside the script block
+
+
+### **1.1.7. MultiQC Report**
+
+
+
+
+### **1.1.8 Metrics and Reports**
+
+
+
+### **1.1.9. Submitting the Workflow to Slurm**
+
+
+<br/>
+
+::: {.callout-note}
+### **Key points**
+- Different channel factories can be used to read different input files
+- 
+:::
+
+
+---
+^*This workshop is adapted from [Fundamentals Training](https://training.nextflow.io/basic_training/), [Advanced Training](https://training.nextflow.io/advanced/), [Developer Tutorials](https://nf-co.re/docs/contributing/tutorials/creating_with_nf_core#creating-a-pipeline), and [Nextflow Patterns](https://nextflow-io.github.io/patterns/) materials from Nextflow and nf-core*^
+

@@ -1,10 +1,9 @@
 ---
-title: "Introduction to Nextflow and running nf-core workflows"
+title: "Introduction to Nextflow Pipeline Development"
 ---
 
-This workshop is designed to provide participants with a foundational understanding of Nextflow and nf-core pipelines, with a focus on running existing pipelines efficiently. Participants are expected to have prior experience with the command-line interface and working with cluster systems like Slurm. The primary goal of the workshop is to equip researchers with the skills needed to use nf-core pipelines for their research data. 
+This workshop is designed to provide participants with a fundamental understanding of workflow development using Nextflow. The goal of this workshop is to provide participants with the skills required to create a simple Nextflow pipeline from scratch, with a focus on reading input data and parallel job submission to the HPC. 
 
-*It is not intended for those looking to develop new Nextflow workflows*
 
 ### Course Presenters
 
@@ -18,35 +17,23 @@ This workshop is designed to provide participants with a foundational understand
 
 ### Prerequisites
 
-- Experience with command line interface and cluster/slurm
-- Familiarity with the basic concept of workflows
-- Access to Peter Mac Cluster
+Attendance in the 'Introduction to Nextflow and Running nf-core Workflows' workshop, or an understanding of the Nextflow concepts outlined in the workshop materials: https://pmcc-bioinformaticscore.github.io/nextflow-intro-workshop/
 
 ### Learning Objectives:
 By the end of this workshop, participants should be able to:
 
-- Gain exposure to key concepts and terminology in Nextflow and nf-core pipelines.
-- Understand the foundational knowledge required to navigate and customize the code base of nf-core pipelines.
-- Develop basic troubleshooting and customization skills necessary for responsibly applying nf-core pipelines to your own research data.
+- Develop a basic Nextflow workflow consisting of processes that use multiple scripting languages
+- Read data of different types into a Nextflow workflow
+- Submit workflow processes with customised resources and container configurations to the cluster
+- Gain an understanding of Groovy / Nextflow syntax
+
 
 ### Set up requirements
 Please complete the [Setup Instructions](./workshops/00_setup.html) before the course.
 
 If you have any trouble, please get in contact with us ASAP via Slack/Teams.
 
-### Workshop schedule
-
-| Lesson     | Overview | Time | 
-|------------|----------| ---------- |
-| [Setup](./workshops/00_setup.html)| Follow these instructions to install VS Code and setup your workspace | Prior to workshop | 
-| Session kick off| Session kick off: Discuss learning outcomes and finalising workspace setup | 09:30 - 09:40 |
-| [Introduction to Nextflow](./workshops/1.1_intro_nextflow.html)| Introduction to Nextflow: Introduce nextflow’s core features and concepts; including CLI and how to run it on Peter Mac cluster | 09:40 - 10:20 | 
-| [Introduction to nf-core](./workshops/1.2_intro_nf_core.html)| Introduction to nf-core: Introduce nf-core features and concepts, structures, tools, and example nf-core pipelines | 10:20 - 11:00 | 
-| Break | Break | 11:00 - 11:15 | 
-| [Customising & running nf-core pipelines](./workshops/2.1_customise_and_run.html)| Customising & running nf-core pipelines: Discuss pipelines’ required inputs, optional inputs, outputs, parameters file and configurations files | 11:15 - 11:45 | 
-| [Troubleshooting nextflow run](./workshops/2.2_troubleshooting.html)| Troubleshooting nextflow run: Discuss Nextflow logging, caching, task execution directory, dependencies, and manual troubleshooting | 11:45 - 12:15 | 
-| [Best practise and Q&A](./workshops/2.3_tips_and_tricks.html)| Best practise, tips & tricks for running nextflow pipelines at Peter Mac cluster | 12:15 - 12:45 | 
 
 ### Credits and acknowledgement
 
-^*This workshop is adapted from [Customising Nf-Core Workshop](https://sydney-informatics-hub.github.io/customising-nfcore-workshop) materials from Sydney Informatics Hub*^
+^*This workshop is adapted from [Fundamentals Training](https://training.nextflow.io/basic_training/), [Advanced Training](https://training.nextflow.io/advanced/), [Developer Tutorials](https://nf-co.re/docs/contributing/tutorials/creating_with_nf_core#creating-a-pipeline), and [Nextflow Patterns](https://nextflow-io.github.io/patterns/) materials from Nextflow and nf-core*^
