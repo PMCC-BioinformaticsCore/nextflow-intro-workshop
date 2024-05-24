@@ -63,7 +63,6 @@ Let's create a Nextflow script `rnaseq.nf` for a RNA-seq workflow. The code begi
 ```default
 #!/usr/bin/env nextflow
 ```
-<br/>
 
 One way to define the workflow parameters is inside the Nextflow script.
 
@@ -218,7 +217,7 @@ Let's first look inside the process execution directory:
 ..  .command.err    .command.out  .command.sh   transcriptome.fa
 ```
 
-We can see that the input file `transcriptome.fa` has been staged inside this process execution directory by being sym-linked. This allows it to be accessed by the script. 
+We can see that the input file `transcriptome.fa` has been staged inside this process execution directory by being symbolically linked. This allows it to be accessed by the script. 
 
 Inside the `.command.err` script, we can see that the `salmon` command was not found, resulting in the termination of the Nextflow workflow. 
 
@@ -269,7 +268,7 @@ The `withName` process selector allows a container to be specified for just the 
 ```default
 process {
   withName: INDEX {
-    container = "/config/binaries/singularity/containers_devel/nextflow/depot.galaxyproject.org-singularity-salmon-1.10.1--h7e5ed60_0.img"
+    container = "https://depot.galaxyproject.org/singularity/salmon:1.10.1--h7e5ed60_0"
   }
 }
 ```
@@ -484,9 +483,9 @@ quant_ch = QUANTIFICATION(index_ch, reads_ch)
 
 Before we can run the new process, we need to define a container that contains the `salmon` tool, inside `nextflow.config`. 
 ```default
-withName: QUANTIFICATION {
-  container = "/config/binaries/singularity/containers_devel/nextflow/depot.galaxyproject.org-singularity-salmon-1.10.1--h7e5ed60_0.img"
-  }
+  withName: QUANTIFICATION {
+    container = "https://depot.galaxyproject.org/singularity/salmon:1.10.1--h7e5ed60_0"
+    }
 ```
 
 Since the first `INDEX` step has already completed successfully, we can add `-resume` to the Nextflow run command:
@@ -509,26 +508,191 @@ executor >  local (3)
 
 ### **1.1.6. Quality Control**
 
-Now, let's implement a `FASTQC` quality control process for the input fastq reads.  PYTHON FASTQ
+Now, let's implement a `FASTQC` quality control process for the input fastq reads using Python. To do this, Python can be defined as the interpreter at the beginning of the Nextflow `script` block. In this process, an output directory is created using Python `os` module. The `fastqc` command is then executed, using the `subprocess` module. 
 
 
-https://pypi.org/project/sequana-fastqc/ 
+```default
+process FASTQC {
+    input:
+    tuple val(sample_id), path(reads)
+
+    output:
+    path "fastqc_${sample_id}_logs"
+
+    script:
+    """
+    #!/usr/bin/env python3
+
+    import subprocess
+    import os
+
+    outdir = "fastqc_${sample_id}_logs"
+    os.makedirs(outdir)
+
+    cmd = "fastqc -o {} -f fastq -q ${reads}".format(outdir)
+    subprocess.run(cmd, shell=True)
+    """
+}
+```
+
+Note that the `$` is still being used to interpolate Nextflow variables, ie. `outdir = "fastqc_${sample_id}_logs"`. To reference variables created inside the Python script, the `$` is not required, and the variable is referenced in the same way as a usual Python script, ie. `os.makedirs(outdir)`. 
 
 
 
-Stuff on accessing nf variables vs variables inside the script block
 
+
+
+beforeScript
+
+The beforeScript directive allows you to execute a custom (Bash) snippet before the main process script is run. This may be useful to initialise the underlying cluster environment or for other custom initialisation.
+
+For example:
+
+process foo {
+  beforeScript 'source /cluster/bin/setup'
+
+  """
+  echo bar
+  """
+}
+
+
+```default
+  withName: FASTQC {
+    beforeScript = "module load fastqc"
+  }
+```
+
+ 
 
 ### **1.1.7. MultiQC Report**
 
+So far, the generated outputs have all been saved inside the Nextflow work directory. For the `FASTQC` process, the specified output directory is only created inside the process execution directory. 
 
+```default
+EXAMPLE
+```
 
+To save results to a specified folder, the `publishDir` process directive can be used. 
 
-### **1.1.8 Metrics and Reports**
+Let's create a new `MULTIQC` process in our workflow that takes the outputs from the `QUANTIFICATION` and `FASTQC` processes to create a final report using the MultiQC tool, and publish the process outputs to a directory outside of the process execution directory. 
 
+```default
+process MULTIQC {
+    publishDir params.outdir, mode:'copy'
 
+    input:
+    path quantification
+    path fastqc
 
-### **1.1.9. Submitting the Workflow to Slurm**
+    output:
+    path "*.html"
+
+    script:
+    """
+    multiqc .
+    """
+}
+```
+
+```default
+CHECK IF COLLECT HAS DIFFERENT RESULTS script6.nf
+
+In this script, note the use of the mix and collect operators chained together to gather the outputs of the QUANTIFICATION and FASTQC processes as a single input. Operators can be used in combinations to combine, split, and transform channels.
+
+MULTIQC(quant_ch.mix(fastqc_ch).collect())
+You will only want one task of MultiQC to be executed to produce one report. Therefore, you can use the mix channel operator to combine the quant_ch and the fastqc_ch channels, followed by the collect operator, to return the complete channel contents as a single element.
+```
+
+In the `MULTIQC` process, the `multiqc` command is performed on both `quantification` and `fastqc` inputs, and publishes the report to a directory defined by the `outdir` parameter. Only files that match the declaration in the output block are published, not all the outputs of a process. By default, files are published to the target folder creating a symbolic link to the file produced in the process execution directory. This behavior can be modified using the `mode` option, eg. `copy`, which copies the file from the process execution directory to the specified output directory. 
+
+Again, the required container for the process can be specified using the `withName` process selector. Since the singularity `cacheDir` has been previously defined, it can be accessed using `$`. 
+
+```default
+  withName: MULTIQC {
+    container = "$singularity.cacheDir/depot.galaxyproject.org-singularity-multiqc-1.21--pyhdfd78af_0.img"
+  }
+```
+
+Run the pipeline, specifying an output directory using the `outdir` parameter:
+
+```default
+nextflow run rnaseq.nf -resume --outdir "results"
+```
+
+### **1.1.8. Metrics and Reports**
+
+Nextflow can produce multiple reports and charts providing several runtime metrics and execution information. These can be enabled by using the following command line options:
+
+- `-with-report`: creates the workflow execution report.
+- `-with-trace`: creates a tab separated value (TSV) file containing runtime information for each executed task.
+- `-with-timeline`: creates the workflow timeline report showing how processes were executed over time. This may be useful to identify the most time consuming tasks and bottlenecks.
+- `-with-dag`: renders the workflow execution direct acyclic graph representation. The dag needs to be given a name (-with-dag dag.png). Note: This feature requires the installation of Graphviz on your computer. See here for further details. You can also output HTML DAGs, and the -preview command my allow you to have a look at an approximate DAG without having to run the pipeline.
+
+Run the workflow with all metrics and reports enabled:
+
+```default
+nextflow run rnaseq.nf -resume \
+-with-trace -with-report -with-timeline -with-dag dag.png
+```
+
+DISCUSSION HERE + EXAMPLES
+
+### **1.9.0. Submitting the Workflow to Slurm**
+
+Wrap the Nextflow run command in a Bash script. 
+
+```default
+#!/bin/bash
+#SBATCH -J nf_rnaseq                         
+#SBATCH --partition janis              
+#SBATCH --time=1:00:00                        
+#SBATCH --cpus-per-task=2                  
+#SBATCH --mem=8G   
+#SBATCH -o %j.out        
+#SBATCH -e %j.err  
+
+# Set up environment
+module purge
+
+module load singularity
+module load nextflow/23.04.1
+
+# Run scripts
+_term() {
+        echo "Caught SIGTERM signal!"
+        kill -s SIGTERM $pid
+        wait $pid
+}
+
+trap _term SIGTERM
+
+nextflow run rnaseq.nf \
+--reads rnaseq_samplesheet.csv \
+-resume \
+& pid=$!
+
+echo "Waiting for ${pid}"
+wait $pid
+
+exit 0
+```
+
+In the script, the pid is 
+
+Add the following to process directives to config
+
+```default
+process {
+  executor = 'slurm'
+  cache    = 'lenient'
+  stageInMode = 'symlink'
+  queue = 'prod_short'
+}
+```
+
+Adding this will set the default execution for all processes. 
+Individual process executions can be specified using different process selectors, such as `withName`
 
 
 <br/>
