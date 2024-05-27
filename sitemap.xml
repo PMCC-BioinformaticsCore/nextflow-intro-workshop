@@ -1,31 +1,43 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
+    <loc>https://PMCC-BioinformaticsCore.github.io/nextflow-intro-workshop/sessions/2_nf_dev_intro.html</loc>
+    <lastmod>2024-05-27T05:37:23.827Z</lastmod>
+  </url>
+  <url>
     <loc>https://PMCC-BioinformaticsCore.github.io/nextflow-intro-workshop/index.html</loc>
-    <lastmod>2024-05-14T16:38:16.134Z</lastmod>
+    <lastmod>2024-05-27T05:37:23.026Z</lastmod>
   </url>
   <url>
     <loc>https://PMCC-BioinformaticsCore.github.io/nextflow-intro-workshop/workshops/2.3_tips_and_tricks.html</loc>
-    <lastmod>2024-05-14T16:38:14.348Z</lastmod>
+    <lastmod>2024-05-27T05:37:21.348Z</lastmod>
   </url>
   <url>
     <loc>https://PMCC-BioinformaticsCore.github.io/nextflow-intro-workshop/workshops/1.2_intro_nf_core.html</loc>
-    <lastmod>2024-05-14T16:38:13.403Z</lastmod>
+    <lastmod>2024-05-27T05:37:20.431Z</lastmod>
   </url>
   <url>
     <loc>https://PMCC-BioinformaticsCore.github.io/nextflow-intro-workshop/workshops/1.1_intro_nextflow.html</loc>
-    <lastmod>2024-05-14T16:38:11.742Z</lastmod>
+    <lastmod>2024-05-27T05:37:18.864Z</lastmod>
+  </url>
+  <url>
+    <loc>https://PMCC-BioinformaticsCore.github.io/nextflow-intro-workshop/workshops/3.1_creating_a_workflow.html</loc>
+    <lastmod>2024-05-27T05:37:18.206Z</lastmod>
   </url>
   <url>
     <loc>https://PMCC-BioinformaticsCore.github.io/nextflow-intro-workshop/workshops/2.2_troubleshooting.html</loc>
-    <lastmod>2024-05-14T16:38:12.557Z</lastmod>
+    <lastmod>2024-05-27T05:37:19.608Z</lastmod>
   </url>
   <url>
     <loc>https://PMCC-BioinformaticsCore.github.io/nextflow-intro-workshop/workshops/00_setup.html</loc>
-    <lastmod>2024-05-14T16:38:13.854Z</lastmod>
+    <lastmod>2024-05-27T05:37:20.869Z</lastmod>
   </url>
   <url>
     <loc>https://PMCC-BioinformaticsCore.github.io/nextflow-intro-workshop/workshops/2.1_customise_and_run.html</loc>
-    <lastmod>2024-05-14T16:38:15.732Z</lastmod>
+    <lastmod>2024-05-27T05:37:22.648Z</lastmod>
+  </url>
+  <url>
+    <loc>https://PMCC-BioinformaticsCore.github.io/nextflow-intro-workshop/sessions/1_intro_run_nf.html</loc>
+    <lastmod>2024-05-27T05:37:23.453Z</lastmod>
   </url>
 </urlset>

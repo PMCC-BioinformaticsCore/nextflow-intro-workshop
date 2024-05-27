@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Peter Mac Nextflow Workshop - Peter Mac Internal Nextflow Workshops</title>
+<title>Peter Mac Nextflow Workshop - Introduction to Nextflow and running nf-core workflows</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -23,22 +23,22 @@ ul.task-list li input[type="checkbox"] {
 </style>
 
 
-<script src="site_libs/quarto-nav/quarto-nav.js"></script>
-<script src="site_libs/quarto-nav/headroom.min.js"></script>
-<script src="site_libs/clipboard/clipboard.min.js"></script>
-<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
-<script src="site_libs/quarto-search/fuse.min.js"></script>
-<script src="site_libs/quarto-search/quarto-search.js"></script>
-<meta name="quarto:offset" content="./">
-<script src="site_libs/quarto-html/quarto.js"></script>
-<script src="site_libs/quarto-html/popper.min.js"></script>
-<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
-<script src="site_libs/quarto-html/anchor.min.js"></script>
-<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
-<script src="site_libs/bootstrap/bootstrap.min.js"></script>
-<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<script src="../site_libs/quarto-html/quarto.js"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -61,7 +61,7 @@ ul.task-list li input[type="checkbox"] {
 }</script>
 
 
-<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="../styles.css">
 </head>
 
 <body class="nav-fixed">
@@ -71,7 +71,7 @@ ul.task-list li input[type="checkbox"] {
     <nav class="navbar navbar-expand-lg navbar-dark ">
       <div class="navbar-container container-fluid">
       <div class="navbar-brand-container">
-    <a class="navbar-brand" href="./index.html">
+    <a class="navbar-brand" href="../index.html">
     <span class="navbar-title">Peter Mac Nextflow Workshop</span>
     </a>
   </div>
@@ -82,11 +82,11 @@ ul.task-list li input[type="checkbox"] {
           <div class="collapse navbar-collapse" id="navbarCollapse">
             <ul class="navbar-nav navbar-nav-scroll me-auto">
   <li class="nav-item">
-    <a class="nav-link active" href="./index.html" rel="" target="" aria-current="page">
+    <a class="nav-link" href="../index.html" rel="" target="">
  <span class="menu-text">Home</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link" href="./workshops/00_setup.html" rel="" target="">
+    <a class="nav-link" href="../workshops/00_setup.html" rel="" target="">
  <span class="menu-text">Setup</span></a>
   </li>  
   <li class="nav-item dropdown ">
@@ -95,11 +95,11 @@ ul.task-list li input[type="checkbox"] {
     </a>
     <ul class="dropdown-menu" aria-labelledby="nav-menu-sessions">    
         <li>
-    <a class="dropdown-item" href="./sessions/1_intro_run_nf.html" rel="" target="">
+    <a class="dropdown-item" href="../sessions/1_intro_run_nf.html" rel="" target="">
  <span class="dropdown-text">Introduction to Nextflow and Nf-core</span></a>
   </li>  
         <li>
-    <a class="dropdown-item" href="./sessions/2_nf_dev_intro.html" rel="" target="">
+    <a class="dropdown-item" href="../sessions/2_nf_dev_intro.html" rel="" target="">
  <span class="dropdown-text">Developing bioinformatics workflows with Nextflow</span></a>
   </li>  
     </ul>
@@ -110,27 +110,27 @@ ul.task-list li input[type="checkbox"] {
     </a>
     <ul class="dropdown-menu" aria-labelledby="nav-menu-workshop">    
         <li>
-    <a class="dropdown-item" href="./workshops/1.1_intro_nextflow.html" rel="" target="">
+    <a class="dropdown-item" href="../workshops/1.1_intro_nextflow.html" rel="" target="">
  <span class="dropdown-text">Introduction to Nextflow</span></a>
   </li>  
         <li>
-    <a class="dropdown-item" href="./workshops/1.2_intro_nf_core.html" rel="" target="">
+    <a class="dropdown-item" href="../workshops/1.2_intro_nf_core.html" rel="" target="">
  <span class="dropdown-text">Introduction to nf-core</span></a>
   </li>  
         <li>
-    <a class="dropdown-item" href="./workshops/2.1_customise_and_run.html" rel="" target="">
+    <a class="dropdown-item" href="../workshops/2.1_customise_and_run.html" rel="" target="">
  <span class="dropdown-text">Customising &amp; running nf-core pipelines</span></a>
   </li>  
         <li>
-    <a class="dropdown-item" href="./workshops/2.2_troubleshooting.html" rel="" target="">
+    <a class="dropdown-item" href="../workshops/2.2_troubleshooting.html" rel="" target="">
  <span class="dropdown-text">Troubleshooting Nextflow run</span></a>
   </li>  
         <li>
-    <a class="dropdown-item" href="./workshops/2.3_tips_and_tricks.html" rel="" target="">
+    <a class="dropdown-item" href="../workshops/2.3_tips_and_tricks.html" rel="" target="">
  <span class="dropdown-text">Best practise, tips and tricks</span></a>
   </li>  
         <li>
-    <a class="dropdown-item" href="./workshops/3.1_creating_a_workflow.html" rel="" target="">
+    <a class="dropdown-item" href="../workshops/3.1_creating_a_workflow.html" rel="" target="">
  <span class="dropdown-text">Creating a workflow</span></a>
   </li>  
     </ul>
@@ -151,9 +151,12 @@ ul.task-list li input[type="checkbox"] {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#course-developers-maintainers" id="toc-course-developers-maintainers" class="nav-link active" data-scroll-target="#course-developers-maintainers">Course Developers &amp; Maintainers</a></li>
-  <li><a href="#current-and-future-workshop-sessions" id="toc-current-and-future-workshop-sessions" class="nav-link" data-scroll-target="#current-and-future-workshop-sessions">Current and Future Workshop Sessions</a></li>
-  <li><a href="#past-workshop-sessions" id="toc-past-workshop-sessions" class="nav-link" data-scroll-target="#past-workshop-sessions">Past Workshop Sessions</a></li>
+  <li><a href="#course-presenters" id="toc-course-presenters" class="nav-link active" data-scroll-target="#course-presenters">Course Presenters</a></li>
+  <li><a href="#course-helpers" id="toc-course-helpers" class="nav-link" data-scroll-target="#course-helpers">Course Helpers</a></li>
+  <li><a href="#prerequisites" id="toc-prerequisites" class="nav-link" data-scroll-target="#prerequisites">Prerequisites</a></li>
+  <li><a href="#learning-objectives" id="toc-learning-objectives" class="nav-link" data-scroll-target="#learning-objectives">Learning Objectives:</a></li>
+  <li><a href="#set-up-requirements" id="toc-set-up-requirements" class="nav-link" data-scroll-target="#set-up-requirements">Set up requirements</a></li>
+  <li><a href="#workshop-schedule" id="toc-workshop-schedule" class="nav-link" data-scroll-target="#workshop-schedule">Workshop schedule</a></li>
   <li><a href="#credits-and-acknowledgement" id="toc-credits-and-acknowledgement" class="nav-link" data-scroll-target="#credits-and-acknowledgement">Credits and acknowledgement</a></li>
   </ul>
 </nav>
@@ -163,7 +166,7 @@ ul.task-list li input[type="checkbox"] {
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Peter Mac Internal Nextflow Workshops</h1>
+<h1 class="title">Introduction to Nextflow and running nf-core workflows</h1>
 </div>
 
 
@@ -178,70 +181,95 @@ ul.task-list li input[type="checkbox"] {
 
 </header>
 
-<p>These workshops are designed to provide participants with a foundational understanding of Nextflow and nf-core pipelines. Participants are expected to have prior experience with the command-line interface and working with cluster systems like Slurm. The primary goal of the workshop is to equip researchers with the skills needed to use nextflow and nf-core pipelines for their research data.</p>
-<section id="course-developers-maintainers" class="level3">
-<h3 class="anchored" data-anchor-id="course-developers-maintainers">Course Developers &amp; Maintainers</h3>
+<p>This workshop is designed to provide participants with a foundational understanding of Nextflow and nf-core pipelines, with a focus on running existing pipelines efficiently. Participants are expected to have prior experience with the command-line interface and working with cluster systems like Slurm. The primary goal of the workshop is to equip researchers with the skills needed to use nf-core pipelines for their research data.</p>
+<p><em>It is not intended for those looking to develop new Nextflow workflows</em></p>
+<section id="course-presenters" class="level3">
+<h3 class="anchored" data-anchor-id="course-presenters">Course Presenters</h3>
 <ul>
 <li>Richard Lupat, Bioinformatics Core Facility</li>
 <li>Miriam Yeung, Cancer Genomics Translational Research Centre</li>
-<li>Song Li, Bioinformatics Core Facility</li>
-<li>Sanduni Rajapaksa, Research Computing Facility</li>
 </ul>
 </section>
-<section id="current-and-future-workshop-sessions" class="level3">
-<h3 class="anchored" data-anchor-id="current-and-future-workshop-sessions">Current and Future Workshop Sessions</h3>
+<section id="course-helpers" class="level3">
+<h3 class="anchored" data-anchor-id="course-helpers">Course Helpers</h3>
+<ul>
+<li>Sanduni Rajapaksa, Research Computing Facility</li>
+<li>Song Li, Bioinformatics Core Facility</li>
+<li>Henrietta Holze, Dawson Lab</li>
+</ul>
+</section>
+<section id="prerequisites" class="level3">
+<h3 class="anchored" data-anchor-id="prerequisites">Prerequisites</h3>
+<ul>
+<li>Experience with command line interface and cluster/slurm</li>
+<li>Familiarity with the basic concept of workflows</li>
+<li>Access to Peter Mac Cluster</li>
+</ul>
+</section>
+<section id="learning-objectives" class="level3">
+<h3 class="anchored" data-anchor-id="learning-objectives">Learning Objectives:</h3>
+<p>By the end of this workshop, participants should be able to:</p>
+<ul>
+<li>Gain exposure to key concepts and terminology in Nextflow and nf-core pipelines.</li>
+<li>Understand the foundational knowledge required to navigate and customize the code base of nf-core pipelines.</li>
+<li>Develop basic troubleshooting and customization skills necessary for responsibly applying nf-core pipelines to your own research data.</li>
+</ul>
+</section>
+<section id="set-up-requirements" class="level3">
+<h3 class="anchored" data-anchor-id="set-up-requirements">Set up requirements</h3>
+<p>Please complete the <a href="../workshops/00_setup.html">Setup Instructions</a> before the course.</p>
+<p>If you have any trouble, please get in contact with us ASAP via Slack/Teams.</p>
+</section>
+<section id="workshop-schedule" class="level3">
+<h3 class="anchored" data-anchor-id="workshop-schedule">Workshop schedule</h3>
 <table class="table">
 <thead>
 <tr class="header">
 <th>Lesson</th>
 <th>Overview</th>
-<th>Date</th>
+<th>Time</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td><a href="./sessions/2_nf_dev_intro.html">Creating a workflow</a></td>
-<td>Introduction to developing bioinformatics workflow with Nextflow (Part1)</td>
-<td>29th May 2024</td>
+<td><a href="../workshops/00_setup.html">Setup</a></td>
+<td>Follow these instructions to install VS Code and setup your workspace</td>
+<td>Prior to workshop</td>
 </tr>
 <tr class="even">
-<td>To-be-added</td>
-<td>Introduction to developing bioinformatics workflow with Nextflow (Part2)</td>
-<td>5th Jun 2024</td>
+<td>Session kick off</td>
+<td>Session kick off: Discuss learning outcomes and finalising workspace setup</td>
+<td>09:30 - 09:40</td>
 </tr>
 <tr class="odd">
-<td>To-be-added</td>
-<td>Introduction to developing bioinformatics workflow with Nextflow (Part3)</td>
-<td>12th Jun 2024</td>
+<td><a href="../workshops/1.1_intro_nextflow.html">Introduction to Nextflow</a></td>
+<td>Introduction to Nextflow: Introduce nextflow’s core features and concepts; including CLI and how to run it on Peter Mac cluster</td>
+<td>09:40 - 10:20</td>
 </tr>
 <tr class="even">
-<td>To-be-added</td>
-<td>Introduction to developing bioinformatics workflow with Nextflow (Part4)</td>
-<td>19th Jun 2024</td>
+<td><a href="../workshops/1.2_intro_nf_core.html">Introduction to nf-core</a></td>
+<td>Introduction to nf-core: Introduce nf-core features and concepts, structures, tools, and example nf-core pipelines</td>
+<td>10:20 - 11:00</td>
 </tr>
-</tbody>
-</table>
-</section>
-<section id="past-workshop-sessions" class="level3">
-<h3 class="anchored" data-anchor-id="past-workshop-sessions">Past Workshop Sessions</h3>
-<table class="table">
-<thead>
-<tr class="header">
-<th>Session</th>
-<th>Overview</th>
-<th>Date</th>
-</tr>
-</thead>
-<tbody>
 <tr class="odd">
-<td><a href="./sessions/1_intro_run_nf.html">Introduction to Nextflow and running nf-core workflows</a></td>
-<td>Introduction to Nextflow: Introduce nextflow’s core features and concepts + nf-core + how to run it at PeterMac</td>
-<td>22nd Nov 2023</td>
+<td>Break</td>
+<td>Break</td>
+<td>11:00 - 11:15</td>
 </tr>
 <tr class="even">
-<td><a href="./sessions/1_intro_run_nf.html">Introduction to Nextflow and running nf-core workflows</a></td>
-<td>(Re-run) Introduction to Nextflow: Introduce nextflow’s core features and concepts + nf-core + how to run it at PeterMac</td>
-<td>15th May 2024</td>
+<td><a href="../workshops/2.1_customise_and_run.html">Customising &amp; running nf-core pipelines</a></td>
+<td>Customising &amp; running nf-core pipelines: Discuss pipelines’ required inputs, optional inputs, outputs, parameters file and configurations files</td>
+<td>11:15 - 11:45</td>
+</tr>
+<tr class="odd">
+<td><a href="../workshops/2.2_troubleshooting.html">Troubleshooting nextflow run</a></td>
+<td>Troubleshooting nextflow run: Discuss Nextflow logging, caching, task execution directory, dependencies, and manual troubleshooting</td>
+<td>11:45 - 12:15</td>
+</tr>
+<tr class="even">
+<td><a href="../workshops/2.3_tips_and_tricks.html">Best practise and Q&amp;A</a></td>
+<td>Best practise, tips &amp; tricks for running nextflow pipelines at Peter Mac cluster</td>
+<td>12:15 - 12:45</td>
 </tr>
 </tbody>
 </table>
