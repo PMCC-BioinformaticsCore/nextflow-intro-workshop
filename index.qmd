@@ -1,51 +1,32 @@
 ---
-title: "Introduction to Nextflow and running nf-core workflows"
+title: "Peter Mac Internal Nextflow Workshops"
 ---
 
-This workshop is designed to provide participants with a foundational understanding of Nextflow and nf-core pipelines, with a focus on running existing pipelines efficiently. Participants are expected to have prior experience with the command-line interface and working with cluster systems like Slurm. The primary goal of the workshop is to equip researchers with the skills needed to use nf-core pipelines for their research data. 
+These workshops are designed to provide participants with a foundational understanding of Nextflow and nf-core pipelines. Participants are expected to have prior experience with the command-line interface and working with cluster systems like Slurm. The primary goal of the workshop is to equip researchers with the skills needed to use nextflow and nf-core pipelines for their research data. 
 
-*It is not intended for those looking to develop new Nextflow workflows*
-
-### Course Presenters
+### Course Developers & Maintainers
 
 - Richard Lupat, Bioinformatics Core Facility
 - Miriam Yeung, Cancer Genomics Translational Research Centre
-
-### Course Helpers
-
+- Song Li, Bioinformatics Core Facility
 - Sanduni Rajapaksa, Research Computing Facility
-- Henrietta Holze, Dawson Lab
 
-### Prerequisites
+### Current and Future Workshop Sessions
 
-- Experience with command line interface and cluster/slurm
-- Familiarity with the basic concept of workflows
-- Access to Peter Mac Cluster
-
-### Learning Objectives:
-By the end of this workshop, participants should be able to:
-
-- Gain exposure to key concepts and terminology in Nextflow and nf-core pipelines.
-- Understand the foundational knowledge required to navigate and customize the code base of nf-core pipelines.
-- Develop basic troubleshooting and customization skills necessary for responsibly applying nf-core pipelines to your own research data.
-
-### Set up requirements
-Please complete the [Setup Instructions](./workshops/00_setup.html) before the course.
-
-If you have any trouble, please get in contact with us ASAP via Slack/Teams.
-
-### Workshop schedule
-
-| Lesson     | Overview | Time | 
+| Lesson     | Overview | Date | 
 |------------|----------| ---------- |
-| [Setup](./workshops/00_setup.html)| Follow these instructions to install VS Code and setup your workspace | Prior to workshop | 
-| Session kick off| Session kick off: Discuss learning outcomes and finalising workspace setup | 09:30 - 09:40 |
-| [Introduction to Nextflow](./workshops/1.1_intro_nextflow.html)| Introduction to Nextflow: Introduce nextflow’s core features and concepts; including CLI and how to run it on Peter Mac cluster | 09:40 - 10:20 | 
-| [Introduction to nf-core](./workshops/1.2_intro_nf_core.html)| Introduction to nf-core: Introduce nf-core features and concepts, structures, tools, and example nf-core pipelines | 10:20 - 11:00 | 
-| Break | Break | 11:00 - 11:15 | 
-| [Customising & running nf-core pipelines](./workshops/2.1_customise_and_run.html)| Customising & running nf-core pipelines: Discuss pipelines’ required inputs, optional inputs, outputs, parameters file and configurations files | 11:15 - 11:45 | 
-| [Troubleshooting nextflow run](./workshops/2.2_troubleshooting.html)| Troubleshooting nextflow run: Discuss Nextflow logging, caching, task execution directory, dependencies, and manual troubleshooting | 11:45 - 12:15 | 
-| [Best practise and Q&A](./workshops/2.3_tips_and_tricks.html)| Best practise, tips & tricks for running nextflow pipelines at Peter Mac cluster | 12:15 - 12:45 | 
+| [Creating a workflow](./sessions/2_nf_dev_intro.html)| Introduction to developing bioinformatics workflow with Nextflow (Part1) | 29th May 2024 | 
+| To-be-added | Introduction to developing bioinformatics workflow with Nextflow (Part2) | 5th Jun 2024 | 
+| To-be-added | Introduction to developing bioinformatics workflow with Nextflow (Part3) | 12th Jun 2024 | 
+| To-be-added | Introduction to developing bioinformatics workflow with Nextflow (Part4) | 19th Jun 2024 | 
+
+### Past Workshop Sessions
+
+| Session     | Overview | Date | 
+|------------|----------| ---------- |
+| [Introduction to Nextflow and running nf-core workflows](./sessions/1_intro_run_nf.html)| Introduction to Nextflow: Introduce nextflow’s core features and concepts + nf-core + how to run it at PeterMac | 22nd Nov 2023 | 
+| [Introduction to Nextflow and running nf-core workflows](./sessions/1_intro_run_nf.html)| (Re-run) Introduction to Nextflow: Introduce nextflow’s core features and concepts + nf-core + how to run it at PeterMac | 15th May 2024 | 
+
 
 ### Credits and acknowledgement
 

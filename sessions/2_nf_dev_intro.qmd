@@ -1,0 +1,53 @@
+---
+title: "Developing bioinformatics workflows with Nextflow"
+---
+
+This workshop is designed to provide participants with a fundamental understanding of developing bioinformatics pipelines using Nextflow. This workshop aims to provide participants with the necessary skills required to create a Nextflow pipeline from scratch or from the nf-core template. 
+
+### Course Presenters
+
+- Richard Lupat, Bioinformatics Core Facility
+- Miriam Yeung, Cancer Genomics Translational Research Centre
+
+### Course Helpers
+
+- Sanduni Rajapaksa, Research Computing Facility
+- Song Li, Bioinformatics Core Facility
+
+### Prerequisites
+
+- Experience with command line interface and cluster/slurm
+- Familiarity with the basic concept of workflows
+- Access to Peter Mac Cluster
+- Attendance in the ['Introduction to Nextflow and Running nf-core Workflows'](./1_intro_run_nf.qmd) workshop, or an understanding of the Nextflow concepts outlined in the workshop material 
+
+### Learning Objectives:
+By the end of this workshop, participants should be able to:
+
+- Develop a basic Nextflow workflow consisting of processes that use multiple scripting languages
+- Gain an understanding of Groovy and Nextflow syntax
+- Read data of different types into a Nextflow workflow
+- Output Nextflow process results to a predefined directory
+- Re-use and import processes, modules, and sub-workflows into a Nextflow workflow
+- Test and set up profiles for a Nextflow workflow
+- Create conditional processes and conditional scripts within a process
+- Gain an understanding of Nextflow channel operators 
+- Develop a basic Nextflow workflow with nf-core templates 
+- Troubleshoot known errors in workflow development
+
+### Set up requirements
+Please complete the [Setup Instructions](./workshops/00_setup.html) before the course.
+
+If you have any trouble, please get in contact with us ASAP via Slack/Teams.
+
+### Workshop schedule
+
+| Lesson     | Overview | Date | 
+|------------|----------| ---------- |
+| [Setup](./workshops/00_setup.html)| Follow these instructions to install VS Code and setup your workspace | Prior to workshop | 
+| Session kick off| Session kick off: Discuss learning outcomes and finalising workspace setup | Every week |
+| [Creating a workflow](../workshops/3.1_creating_a_workflow.html)| Introduction to Nextflow: Introduce nextflow’s core features and concepts; including CLI and how to run it on Peter Mac cluster | 29th May 2024 | 
+
+
+### Credits and acknowledgement
+
