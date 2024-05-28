@@ -51,3 +51,4 @@ If you have any trouble, please get in contact with us ASAP via Slack/Teams.
 
 ### Credits and acknowledgement
 
+This workshop is adapted from [Fundamentals Training](https://training.nextflow.io/basic_training/), [Advanced Training](https://training.nextflow.io/advanced/), [Developer Tutorials](https://nf-co.re/docs/contributing/tutorials/creating_with_nf_core#creating-a-pipeline), and [Nextflow Patterns](https://nextflow-io.github.io/patterns/) materials from Nextflow and nf-core.
