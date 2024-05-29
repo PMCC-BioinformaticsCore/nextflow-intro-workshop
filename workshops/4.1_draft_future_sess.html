@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Peter Mac Nextflow Workshop - Developing bioinformatics workflows with Nextflow</title>
+<title>Peter Mac Nextflow Workshop - Nextflow Development - Metadata Parsing</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -19,6 +19,40 @@ ul.task-list li input[type="checkbox"] {
   width: 0.8em;
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
 }
 </style>
 
@@ -151,13 +185,7 @@ ul.task-list li input[type="checkbox"] {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#course-presenters" id="toc-course-presenters" class="nav-link active" data-scroll-target="#course-presenters">Course Presenters</a></li>
-  <li><a href="#course-helpers" id="toc-course-helpers" class="nav-link" data-scroll-target="#course-helpers">Course Helpers</a></li>
-  <li><a href="#prerequisites" id="toc-prerequisites" class="nav-link" data-scroll-target="#prerequisites">Prerequisites</a></li>
-  <li><a href="#learning-objectives" id="toc-learning-objectives" class="nav-link" data-scroll-target="#learning-objectives">Learning Objectives:</a></li>
-  <li><a href="#set-up-requirements" id="toc-set-up-requirements" class="nav-link" data-scroll-target="#set-up-requirements">Set up requirements</a></li>
-  <li><a href="#workshop-schedule" id="toc-workshop-schedule" class="nav-link" data-scroll-target="#workshop-schedule">Workshop schedule</a></li>
-  <li><a href="#credits-and-acknowledgement" id="toc-credits-and-acknowledgement" class="nav-link" data-scroll-target="#credits-and-acknowledgement">Credits and acknowledgement</a></li>
+  <li><a href="#metadata-parsing" id="toc-metadata-parsing" class="nav-link active" data-scroll-target="#metadata-parsing">**Metadata Parsing</a></li>
   </ul>
 </nav>
     </div>
@@ -166,7 +194,7 @@ ul.task-list li input[type="checkbox"] {
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Developing bioinformatics workflows with Nextflow</h1>
+<h1 class="title"><strong>Nextflow Development - Metadata Parsing</strong></h1>
 </div>
 
 
@@ -181,98 +209,72 @@ ul.task-list li input[type="checkbox"] {
 
 </header>
 
-<p>This workshop is designed to provide participants with a fundamental understanding of developing bioinformatics pipelines using Nextflow. This workshop aims to provide participants with the necessary skills required to create a Nextflow pipeline from scratch or from the nf-core template.</p>
-<section id="course-presenters" class="level3">
-<h3 class="anchored" data-anchor-id="course-presenters">Course Presenters</h3>
-<ul>
-<li>Richard Lupat, Bioinformatics Core Facility</li>
-<li>Miriam Yeung, Cancer Genomics Translational Research Centre</li>
-</ul>
-</section>
-<section id="course-helpers" class="level3">
-<h3 class="anchored" data-anchor-id="course-helpers">Course Helpers</h3>
-<ul>
-<li>Sanduni Rajapaksa, Research Computing Facility</li>
-<li>Song Li, Bioinformatics Core Facility</li>
-</ul>
-</section>
-<section id="prerequisites" class="level3">
-<h3 class="anchored" data-anchor-id="prerequisites">Prerequisites</h3>
-<ul>
-<li>Experience with command line interface and cluster/slurm</li>
-<li>Familiarity with the basic concept of workflows</li>
-<li>Access to Peter Mac Cluster</li>
-<li>Attendance in the <a href="../sessions/1_intro_run_nf.html">‘Introduction to Nextflow and Running nf-core Workflows’</a> workshop, or an understanding of the Nextflow concepts outlined in the workshop material</li>
-</ul>
-</section>
-<section id="learning-objectives" class="level3">
-<h3 class="anchored" data-anchor-id="learning-objectives">Learning Objectives:</h3>
-<p>By the end of this workshop, participants should be able to:</p>
-<ul>
-<li>Develop a basic Nextflow workflow consisting of processes that use multiple scripting languages</li>
-<li>Gain an understanding of Groovy and Nextflow syntax</li>
-<li>Read data of different types into a Nextflow workflow</li>
-<li>Output Nextflow process results to a predefined directory</li>
-<li>Re-use and import processes, modules, and sub-workflows into a Nextflow workflow</li>
-<li>Test and set up profiles for a Nextflow workflow</li>
-<li>Create conditional processes and conditional scripts within a process</li>
-<li>Gain an understanding of Nextflow channel operators</li>
-<li>Develop a basic Nextflow workflow with nf-core templates</li>
-<li>Troubleshoot known errors in workflow development</li>
-</ul>
-</section>
-<section id="set-up-requirements" class="level3">
-<h3 class="anchored" data-anchor-id="set-up-requirements">Set up requirements</h3>
-<p>Please complete the <a href="../workshops/00_setup.html">Setup Instructions</a> before the course.</p>
-<p>If you have any trouble, please get in contact with us ASAP via Slack/Teams.</p>
-</section>
-<section id="workshop-schedule" class="level3">
-<h3 class="anchored" data-anchor-id="workshop-schedule">Workshop schedule</h3>
-<table class="table">
-<thead>
-<tr class="header">
-<th>Lesson</th>
-<th>Overview</th>
-<th>Date</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td><a href="../workshops/00_setup.html">Setup</a></td>
-<td>Follow these instructions to install VS Code and setup your workspace</td>
-<td>Prior to workshop</td>
-</tr>
-<tr class="even">
-<td>Session kick off</td>
-<td>Session kick off: Discuss learning outcomes and finalising workspace setup</td>
-<td>Every week</td>
-</tr>
-<tr class="odd">
-<td><a href="../workshops/3.1_creating_a_workflow.html">Basic to Create a Nextflow Workflow</a></td>
-<td>Introduction to nextflow channels, processes, data types and workflows</td>
-<td>29th May 2024</td>
-</tr>
-<tr class="even">
-<td>Developing Reusable Workflows</td>
-<td>Introduction to modules imports, sub-workflows, setting up test-profile, and common useful groovy functions</td>
-<td>5th Jun 2024</td>
-</tr>
-<tr class="odd">
-<td>Working with nf-core Templates</td>
-<td>Introduction to developing nextflow workflow with nf-core templates</td>
-<td>12th Jun 2024</td>
-</tr>
-<tr class="even">
-<td>Working with Nextflow Built-in Functions</td>
-<td>Introduction to nextflow operators, metadata propagation, grouping, and splitting</td>
-<td>19th Jun 2024</td>
-</tr>
-</tbody>
-</table>
-</section>
-<section id="credits-and-acknowledgement" class="level3">
-<h3 class="anchored" data-anchor-id="credits-and-acknowledgement">Credits and acknowledgement</h3>
-<p>This workshop is adapted from <a href="https://training.nextflow.io/basic_training/">Fundamentals Training</a>, <a href="https://training.nextflow.io/advanced/">Advanced Training</a>, <a href="https://nf-co.re/docs/contributing/tutorials/creating_with_nf_core#creating-a-pipeline">Developer Tutorials</a>, and <a href="https://nextflow-io.github.io/patterns/">Nextflow Patterns</a> materials from Nextflow and nf-core.</p>
+<section id="metadata-parsing" class="level2">
+<h2 class="anchored" data-anchor-id="metadata-parsing">**Metadata Parsing</h2>
+<p>Currently, we have defined the <code>reads</code> parameter as a string:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode default code-with-copy"><code class="sourceCode default"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>params.reads = "/.../training/nf-training/data/ggal/gut_{1,2}.fq"</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>To group the <code>reads</code> parameter, the <code>fromFilePairs</code> channel factory can be used. Add the following to the <code>workflow</code> block and run the workflow:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode default code-with-copy"><code class="sourceCode default"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>reads_ch = Channel.fromFilePairs("$params.reads")</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>reads_ch.view()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>The <code>reads</code> parameter is being converted into a file pair group using <code>fromFilePairs</code>, and is assigned to <code>reads_ch</code>. The <code>reads_ch</code> consists of a tuple of two items – the first is the grouping key of the matching pair (gut), and the second is a list of paths to each file:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode default code-with-copy"><code class="sourceCode default"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>[gut, [/.../training/nf-training/data/ggal/gut_1.fq, /.../training/nf-training/data/ggal/gut_2.fq]]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Glob patterns can also be used to create channels of file pair groups. Inside the data directory, we have pairs of gut, liver, and lung files that can all be read into <code>reads_ch</code>.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode default code-with-copy"><code class="sourceCode default"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>&gt;&gt;&gt; ls "/.../training/nf-training/data/ggal/"</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>gut_1.fq  gut_2.fq  liver_1.fq  liver_2.fq  lung_1.fq  lung_2.fq  transcriptome.fa</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Run the <code>rnaseq.nf</code> workflow specifying all <code>.fq</code> files inside <code>/.../training/nf-training/data/ggal/</code> as the <code>reads</code> parameter via the command line:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode default code-with-copy"><code class="sourceCode default"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>nextflow run rnaseq.nf --reads '/.../training/nf-training/data/ggal/*_{1,2}.fq'</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>File paths that include one or more wildcards (ie. <code>*</code>, <code>?</code>, etc.) MUST be wrapped in single-quoted characters to avoid Bash expanding the glob on the command line.</p>
+<p>The <code>reads_ch</code> now contains three tuple elements with unique grouping keys:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode default code-with-copy"><code class="sourceCode default"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>[gut, [/.../training/nf-training/data/ggal/gut_1.fq, /.../training/nf-training/data/ggal/gut_2.fq]]</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>[liver, [/.../training/nf-training/data/ggal/liver_1.fq, /.../training/nf-training/data/ggal/liver_2.fq]]</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>[lung, [/.../training/nf-training/data/ggal/lung_1.fq, /.../training/nf-training/data/ggal/lung_2.fq]]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>The grouping key metadata can also be explicitly created without having to rely on file names, using the <code>map</code> channel operator. Let’s start by creating a samplesheet <code>rnaseq_samplesheet.csv</code> with column headings <code>sample_name</code>, <code>fastq1</code>, and <code>fastq2</code>, and fill in a custom <code>sample_name</code>, along with the paths to the <code>.fq</code> files.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode default code-with-copy"><code class="sourceCode default"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>sample_name,fastq1,fastq2</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>gut_sample,/.../training/nf-training/data/ggal/gut_1.fq,/.../training/nf-training/data/ggal/gut_2.fq</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>liver_sample,/.../training/nf-training/data/ggal/liver_1.fq,/.../training/nf-training/data/ggal/liver_2.fq</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>lung_sample,/.../training/nf-training/data/ggal/lung_1.fq,/.../training/nf-training/data/ggal/lung_2.fq</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Let’s now supply the path to <code>rnaseq_samplesheet.csv</code> to the <code>reads</code> parameter in <code>rnaseq.nf</code>.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode default code-with-copy"><code class="sourceCode default"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>params.reads = "/.../rnaseq_samplesheet.csv"</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Previously, the <code>reads</code> parameter consisted of a string of the <code>.fq</code> files directly. Now, it is a string to a <code>.csv</code> file containing the <code>.fq</code> files. Therefore, the channel factory method that reads the input file also needs to be changed. Since the parameter is now a single file path, the <code>fromPath</code> method can first be used, which creates a channel of <code>Path</code> type object. The <code>splitCsv</code> channel operator can then be used to parse the contents of the channel.</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode default code-with-copy"><code class="sourceCode default"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>reads_ch = Channel.fromPath(params.reads)</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>reads_ch.view()</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>reads_ch = reads_ch.splitCsv(header:true)</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>reads_ch.view()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>When using <code>splitCsv</code> in the above example, <code>header</code> is set to <code>true</code>. This will use the first line of the <code>.csv</code> file as the column names. Let’s run the pipeline containing the new input parameter.</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode default code-with-copy"><code class="sourceCode default"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>&gt;&gt;&gt; nextflow run rnaseq.nf</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>N E X T F L O W  ~  version 23.04.1</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>Launching `rnaseq.nf` [distraught_avogadro] DSL2 - revision: 525e081ba2</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>reads: rnaseq_samplesheet.csv</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>reads: $params.reads</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>executor &gt;  local (1)</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>[4e/eeae2a] process &gt; INDEX [100%] 1 of 1 ✔</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>/.../rnaseq_samplesheet.csv</span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>[sample_name:gut_sample, fastq1:/.../training/nf-training/data/ggal/gut_1.fq, fastq2:/.../training/nf-training/data/ggal/gut_2.fq]</span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>[sample_name:liver_sample, fastq1:/.../training/nf-training/data/ggal/liver_1.fq, fastq2:/.../training/nf-training/data/ggal/liver_2.f]</span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>[sample_name:lung_sample, fastq1:/.../training/nf-training/data/ggal/lung_1.fq, fastq2:/.../training/nf-training/data/ggal/lung_2.fq]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>The <code>/.../rnaseq_samplesheet.csv</code> is the output of <code>reads_ch</code> directly after the <code>fromPath</code> channel factory method was used. Here, the channel is a <code>Path</code> type object. After invoking the <code>splitCsv</code> channel operator, the <code>reads_ch</code> is now replaced with a channel consisting of three elements, where each element is a row in the <code>.csv</code> file, returned as a list. Since <code>header</code> was set to <code>true</code>, each element in the list is also mapped to the column names. This can be used when creating the custom grouping key.</p>
+<p>To create grouping key metadata from the list output by <code>splitCsv</code>, the <code>map</code> channel operator can be used.</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode default code-with-copy"><code class="sourceCode default"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>  reads_ch = reads_ch.map { row -&gt; </span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>      grp_meta = "$row.sample_name"</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>      [grp_meta, [row.fastq1, row.fastq2]]</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>      }</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>  reads_ch.view()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Here, for each list in <code>reads_ch</code>, we assign it to a variable <code>row</code>. We then create custom grouping key metadata <code>grp_meta</code> based on the <code>sample_name</code> column from the <code>.csv</code>, which can be accessed via the <code>row</code> variable by <code>.</code> separation. After the custom metadata key is assigned, a tuple is created by assigning <code>grp_meta</code> as the first element, and the two <code>.fq</code> files as the second element, accessed via the <code>row</code> variable by <code>.</code> separation.</p>
+<p>Let’s run the pipeline containing the custom grouping key:</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode default code-with-copy"><code class="sourceCode default"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>&gt;&gt;&gt; nextflow run rnaseq.nf</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>N E X T F L O W  ~  version 23.04.1</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>Launching `rnaseq.nf` [happy_torricelli] DSL2 - revision: e9e1499a97</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>reads: rnaseq_samplesheet.csv</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>reads: $params.reads</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>[-        ] process &gt; INDEX -</span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>[gut_sample, [/.../training/nf-training/data/ggal/gut_1.fq, /.../training/nf-training/data/ggal/gut_2.fq]]</span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>[liver_sample, [/home/sli/test/training/nf-training/data/ggal/liver_1.fq, /.../training/nf-training/data/ggal/liver_2.fq]]</span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>[lung_sample, [/.../training/nf-training/data/ggal/lung_1.fq, /.../training/nf-training/data/ggal/lung_2.fq]]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>The custom grouping key can be created from multiple values in the samplesheet. For example, <code>grp_meta = [sample : row.sample_name , file : row.fastq1]</code> will create the metadata key using both the <code>sample_name</code> and <code>fastq1</code> file names. The samplesheet can also be created to include multiple sample characteristics, such as <code>lane</code>, <code>data_type</code>, etc. Each of these characteristics can be used to ensure an adequte grouping key is creaed for that sample.</p>
 
 
 </section>

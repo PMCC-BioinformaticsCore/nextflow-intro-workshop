@@ -826,7 +826,7 @@ Answer
 <h3 class="anchored" data-anchor-id="quality-control"><strong>4.1.5. Quality Control</strong></h3>
 <p>Now, let’s implement a <code>FASTQC</code> quality control process for the input fastq reads.</p>
 <p><strong>Challenge:</strong></p>
-<p>Create a process called <code>FASTQC</code> that takes <code>reads_ch</code> as an input, and declares the process input to be a tuple matching the structure of <code>reads_ch</code>, where the first element is assigned the variable <code>sample_id</code>, and the second variable is assigned the varible <code>reads</code>. This <code>FASTQC</code> process will first create an output directory <code>fastqc_${sample_id}_logs</code>, then perform <code>fastqc</code> on the input <code>reads</code> and save the results in the newly created directory <code>fastqc_${sample_id}_logs</code>:</p>
+<p>Create a process called <code>FASTQC</code> that takes <code>reads_ch</code> as an input, and declares the process input to be a tuple matching the structure of <code>reads_ch</code>, where the first element is assigned the variable <code>sample_id</code>, and the second variable is assigned the variable <code>reads</code>. This <code>FASTQC</code> process will first create an output directory <code>fastqc_${sample_id}_logs</code>, then perform <code>fastqc</code> on the input <code>reads</code> and save the results in the newly created directory <code>fastqc_${sample_id}_logs</code>:</p>
 <div class="sourceCode" id="cb49"><pre class="sourceCode default code-with-copy"><code class="sourceCode default"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a>mkdir fastqc_${sample_id}_logs</span>
 <span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a>fastqc -o fastqc_${sample_id}_logs -f fastq -q ${reads}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Take <code>fastqc_${sample_id}_logs</code> as the output of the process, and assign it to the channel <code>fastqc_ch</code>. Finally, specify the process container to be the following:</p>
@@ -922,6 +922,7 @@ Answer
 </div>
 <hr>
 <p><sup><em>This workshop is adapted from <a href="https://training.nextflow.io/basic_training/">Fundamentals Training</a>, <a href="https://training.nextflow.io/advanced/">Advanced Training</a>, <a href="https://nf-co.re/docs/contributing/tutorials/creating_with_nf_core#creating-a-pipeline">Developer Tutorials</a>, and <a href="https://nextflow-io.github.io/patterns/">Nextflow Patterns</a> materials from Nextflow and nf-core</em></sup></p>
+<p><span style="font-size:0.5em;">^*<a href="./4.1_draft_future_sess.html">Draft for Future Sessions</a></span></p>
 
 
 </section>
