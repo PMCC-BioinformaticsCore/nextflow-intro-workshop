@@ -859,7 +859,7 @@ In the `MULTIQC` process, the `multiqc` command is performed on both `quantifica
 
 Add the following to the end of workflow scope:
 ```default
-nultiqc_ch = MULTIQC(quant_ch, fastqc_ch)
+multiqc_ch = MULTIQC(quant_ch, fastqc_ch)
 ```
 
 Run the pipeline, specifying an output directory using the `outdir` parameter:
