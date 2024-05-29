@@ -36,7 +36,7 @@ By the end of this workshop, participants should be able to:
 - Troubleshoot known errors in workflow development
 
 ### Set up requirements
-Please complete the [Setup Instructions](./workshops/00_setup.html) before the course.
+Please complete the [Setup Instructions](../workshops/00_setup.html) before the course.
 
 If you have any trouble, please get in contact with us ASAP via Slack/Teams.
 
@@ -44,7 +44,7 @@ If you have any trouble, please get in contact with us ASAP via Slack/Teams.
 
 | Lesson     | Overview | Date | 
 |------------|----------| ---------- |
-| [Setup](./workshops/00_setup.html)| Follow these instructions to install VS Code and setup your workspace | Prior to workshop | 
+| [Setup](../workshops/00_setup.html)| Follow these instructions to install VS Code and setup your workspace | Prior to workshop | 
 | Session kick off| Session kick off: Discuss learning outcomes and finalising workspace setup | Every week |
 | [Basic to Create a Nextflow Workflow](../workshops/3.1_creating_a_workflow.html)| Introduction to nextflow channels, processes, data types and workflows | 29th May 2024 | 
 | Developing Reusable Workflows | Introduction to modules imports, sub-workflows, setting up test-profile, and common useful groovy functions | 5th Jun 2024 | 

@@ -775,7 +775,7 @@ Now, let's implement a `FASTQC` quality control process for the input fastq read
 
 **Challenge:** 
 
-Create a process called `FASTQC` that takes `reads_ch` as an input, and declares the process input to be a tuple matching the structure of `reads_ch`, where the first element is assigned the variable `sample_id`, and the second variable is assigned the varible `reads`. This `FASTQC` process will first create an output directory `fastqc_${sample_id}_logs`, then perform `fastqc` on the input `reads` and save the results in the newly created directory `fastqc_${sample_id}_logs`:
+Create a process called `FASTQC` that takes `reads_ch` as an input, and declares the process input to be a tuple matching the structure of `reads_ch`, where the first element is assigned the variable `sample_id`, and the second variable is assigned the variable `reads`. This `FASTQC` process will first create an output directory `fastqc_${sample_id}_logs`, then perform `fastqc` on the input `reads` and save the results in the newly created directory `fastqc_${sample_id}_logs`:
 ```default
 mkdir fastqc_${sample_id}_logs
 fastqc -o fastqc_${sample_id}_logs -f fastq -q ${reads}
@@ -887,3 +887,4 @@ gut.html  liver.html  lung.html
 ---
 ^*This workshop is adapted from [Fundamentals Training](https://training.nextflow.io/basic_training/), [Advanced Training](https://training.nextflow.io/advanced/), [Developer Tutorials](https://nf-co.re/docs/contributing/tutorials/creating_with_nf_core#creating-a-pipeline), and [Nextflow Patterns](https://nextflow-io.github.io/patterns/) materials from Nextflow and nf-core*^
 
+<span style="font-size:0.5em;">^*[Draft for Future Sessions](./4.1_draft_future_sess.html)</span>
