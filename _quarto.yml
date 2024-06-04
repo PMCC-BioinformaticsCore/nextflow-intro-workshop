@@ -29,6 +29,8 @@ website:
           href: workshops/2.3_tips_and_tricks.html
         - text: "Creating a workflow"
           href: workshops/3.1_creating_a_workflow.html
+        - text: "Modularisation"
+          href: workshops/4.1_modules.html
 
 format:
   html:
