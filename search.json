@@ -84,190 +84,190 @@
     "text": "Currently, we have defined the reads parameter as a string:\nparams.reads = \"/.../training/nf-training/data/ggal/gut_{1,2}.fq\"\nTo group the reads parameter, the fromFilePairs channel factory can be used. Add the following to the workflow block and run the workflow:\nreads_ch = Channel.fromFilePairs(\"$params.reads\")\nreads_ch.view()\nThe reads parameter is being converted into a file pair group using fromFilePairs, and is assigned to reads_ch. The reads_ch consists of a tuple of two items – the first is the grouping key of the matching pair (gut), and the second is a list of paths to each file:\n[gut, [/.../training/nf-training/data/ggal/gut_1.fq, /.../training/nf-training/data/ggal/gut_2.fq]]\nGlob patterns can also be used to create channels of file pair groups. Inside the data directory, we have pairs of gut, liver, and lung files that can all be read into reads_ch.\n&gt;&gt;&gt; ls \"/.../training/nf-training/data/ggal/\"\n\ngut_1.fq  gut_2.fq  liver_1.fq  liver_2.fq  lung_1.fq  lung_2.fq  transcriptome.fa\nRun the rnaseq.nf workflow specifying all .fq files inside /.../training/nf-training/data/ggal/ as the reads parameter via the command line:\nnextflow run rnaseq.nf --reads '/.../training/nf-training/data/ggal/*_{1,2}.fq'\nFile paths that include one or more wildcards (ie. *, ?, etc.) MUST be wrapped in single-quoted characters to avoid Bash expanding the glob on the command line.\nThe reads_ch now contains three tuple elements with unique grouping keys:\n[gut, [/.../training/nf-training/data/ggal/gut_1.fq, /.../training/nf-training/data/ggal/gut_2.fq]]\n[liver, [/.../training/nf-training/data/ggal/liver_1.fq, /.../training/nf-training/data/ggal/liver_2.fq]]\n[lung, [/.../training/nf-training/data/ggal/lung_1.fq, /.../training/nf-training/data/ggal/lung_2.fq]]\nThe grouping key metadata can also be explicitly created without having to rely on file names, using the map channel operator. Let’s start by creating a samplesheet rnaseq_samplesheet.csv with column headings sample_name, fastq1, and fastq2, and fill in a custom sample_name, along with the paths to the .fq files.\nsample_name,fastq1,fastq2\ngut_sample,/.../training/nf-training/data/ggal/gut_1.fq,/.../training/nf-training/data/ggal/gut_2.fq\nliver_sample,/.../training/nf-training/data/ggal/liver_1.fq,/.../training/nf-training/data/ggal/liver_2.fq\nlung_sample,/.../training/nf-training/data/ggal/lung_1.fq,/.../training/nf-training/data/ggal/lung_2.fq\nLet’s now supply the path to rnaseq_samplesheet.csv to the reads parameter in rnaseq.nf.\nparams.reads = \"/.../rnaseq_samplesheet.csv\"\nPreviously, the reads parameter consisted of a string of the .fq files directly. Now, it is a string to a .csv file containing the .fq files. Therefore, the channel factory method that reads the input file also needs to be changed. Since the parameter is now a single file path, the fromPath method can first be used, which creates a channel of Path type object. The splitCsv channel operator can then be used to parse the contents of the channel.\nreads_ch = Channel.fromPath(params.reads)\nreads_ch.view()\n\nreads_ch = reads_ch.splitCsv(header:true)\nreads_ch.view()\nWhen using splitCsv in the above example, header is set to true. This will use the first line of the .csv file as the column names. Let’s run the pipeline containing the new input parameter.\n&gt;&gt;&gt; nextflow run rnaseq.nf\n\nN E X T F L O W  ~  version 23.04.1\nLaunching `rnaseq.nf` [distraught_avogadro] DSL2 - revision: 525e081ba2\nreads: rnaseq_samplesheet.csv\nreads: $params.reads\nexecutor &gt;  local (1)\n[4e/eeae2a] process &gt; INDEX [100%] 1 of 1 ✔\n/.../rnaseq_samplesheet.csv\n[sample_name:gut_sample, fastq1:/.../training/nf-training/data/ggal/gut_1.fq, fastq2:/.../training/nf-training/data/ggal/gut_2.fq]\n[sample_name:liver_sample, fastq1:/.../training/nf-training/data/ggal/liver_1.fq, fastq2:/.../training/nf-training/data/ggal/liver_2.f]\n[sample_name:lung_sample, fastq1:/.../training/nf-training/data/ggal/lung_1.fq, fastq2:/.../training/nf-training/data/ggal/lung_2.fq]\nThe /.../rnaseq_samplesheet.csv is the output of reads_ch directly after the fromPath channel factory method was used. Here, the channel is a Path type object. After invoking the splitCsv channel operator, the reads_ch is now replaced with a channel consisting of three elements, where each element is a row in the .csv file, returned as a list. Since header was set to true, each element in the list is also mapped to the column names. This can be used when creating the custom grouping key.\nTo create grouping key metadata from the list output by splitCsv, the map channel operator can be used.\n  reads_ch = reads_ch.map { row -&gt; \n      grp_meta = \"$row.sample_name\"\n      [grp_meta, [row.fastq1, row.fastq2]]\n      }\n  reads_ch.view()\nHere, for each list in reads_ch, we assign it to a variable row. We then create custom grouping key metadata grp_meta based on the sample_name column from the .csv, which can be accessed via the row variable by . separation. After the custom metadata key is assigned, a tuple is created by assigning grp_meta as the first element, and the two .fq files as the second element, accessed via the row variable by . separation.\nLet’s run the pipeline containing the custom grouping key:\n&gt;&gt;&gt; nextflow run rnaseq.nf\n\nN E X T F L O W  ~  version 23.04.1\nLaunching `rnaseq.nf` [happy_torricelli] DSL2 - revision: e9e1499a97\nreads: rnaseq_samplesheet.csv\nreads: $params.reads\n[-        ] process &gt; INDEX -\n[gut_sample, [/.../training/nf-training/data/ggal/gut_1.fq, /.../training/nf-training/data/ggal/gut_2.fq]]\n[liver_sample, [/home/sli/test/training/nf-training/data/ggal/liver_1.fq, /.../training/nf-training/data/ggal/liver_2.fq]]\n[lung_sample, [/.../training/nf-training/data/ggal/lung_1.fq, /.../training/nf-training/data/ggal/lung_2.fq]]\nThe custom grouping key can be created from multiple values in the samplesheet. For example, grp_meta = [sample : row.sample_name , file : row.fastq1] will create the metadata key using both the sample_name and fastq1 file names. The samplesheet can also be created to include multiple sample characteristics, such as lane, data_type, etc. Each of these characteristics can be used to ensure an adequte grouping key is creaed for that sample."
   },
   {
-    "objectID": "workshops/4_1_modules.html",
-    "href": "workshops/4_1_modules.html",
+    "objectID": "workshops/4.1_modules.html",
+    "href": "workshops/4.1_modules.html",
     "title": "Nextflow Development - Developing Modularised Workflows",
     "section": "",
     "text": "Objectives\n\n\n\n\nGain an understanding of Nextflow modules and subworkflows\nGain an understanding of Nextflow workflow structures\nExplore some groovy functions and libraries\nSetup config, profile, and some test data"
   },
   {
-    "objectID": "workshops/4_1_modules.html#environment-setup",
-    "href": "workshops/4_1_modules.html#environment-setup",
+    "objectID": "workshops/4.1_modules.html#environment-setup",
+    "href": "workshops/4.1_modules.html#environment-setup",
     "title": "Nextflow Development - Developing Modularised Workflows",
     "section": "Environment Setup",
     "text": "Environment Setup\nSet up an interactive shell to run our Nextflow workflow:\nsrun --pty -p prod_short --mem 8GB --mincpus 2 -t 0-2:00 bash\nLoad the required modules to run Nextflow:\nmodule load nextflow/23.04.1\nmodule load singularity/3.7.3\nSet the singularity cache environment variable:\nexport NXF_SINGULARITY_CACHEDIR=/config/binaries/singularity/containers_devel/nextflow\nSingularity images downloaded by workflow executions will now be stored in this directory.\nYou may want to include these, or other environmental variables, in your .bashrc file (or alternate) that is loaded when you log in so you don’t need to export variables every session. A complete list of environment variables can be found here."
   },
   {
-    "objectID": "workshops/4_1_modules.html#modularization",
-    "href": "workshops/4_1_modules.html#modularization",
+    "objectID": "workshops/4.1_modules.html#modularization",
+    "href": "workshops/4.1_modules.html#modularization",
     "title": "Nextflow Development - Developing Modularised Workflows",
     "section": "5. Modularization",
     "text": "5. Modularization\nThe definition of module libraries simplifies the writing of complex data analysis workflows and makes re-use of processes much easier.\nUsing the rnaseq.nf example from previous section, you can convert the workflow’s processes into modules, then call them within the workflow scope.\n#!/usr/bin/env nextflow\n\nparams.reads = \"/scratch/users/.../nf-training/data/ggal/*_{1,2}.fq\"\nparams.transcriptome_file = \"/scratch/users/.../nf-training/ggal/transcriptome.fa\"\nparams.multiqc = \"/scratch/users/.../nf-training/multiqc\"\n\nreads_ch = Channel.fromFilePairs(\"$params.reads\")\n\nprocess INDEX {\n    container \"/config/binaries/singularity/containers_devel/nextflow/depot.galaxyproject.org-singularity-salmon-1.10.1--h7e5ed60_0.img\"\n\n    input:\n    path transcriptome\n\n    output:\n    path \"salmon_idx\"\n\n    script:\n    \"\"\"\n    salmon index --threads $task.cpus -t $transcriptome -i salmon_idx\n    \"\"\"\n}\n\nprocess QUANTIFICATION {\n    container \"/config/binaries/singularity/containers_devel/nextflow/depot.galaxyproject.org-singularity-salmon-1.10.1--h7e5ed60_0.img\"\n\n    input:\n    path salmon_index\n    tuple val(sample_id), path(reads)\n\n    output:\n    path \"$sample_id\"\n\n    script:\n    \"\"\"\n    salmon quant --threads $task.cpus --libType=U \\\n    -i $salmon_index -1 ${reads[0]} -2 ${reads[1]} -o $sample_id\n    \"\"\"\n}\n\nprocess FASTQC {\n    container \"/config/binaries/singularity/containers_devel/nextflow/depot.galaxyproject.org-singularity-fastqc-0.12.1--hdfd78af_0.img\"\n\n    input:\n    tuple val(sample_id), path(reads)\n\n    output:\n    path \"fastqc_${sample_id}_logs\"\n\n    script:\n    \"\"\"\n    mkdir fastqc_${sample_id}_logs\n    fastqc -o fastqc_${sample_id}_logs -f fastq -q ${reads}\n    \"\"\"\n}\n\nprocess MULTIQC {\n    publishDir params.outdir, mode:'copy'\n    container \"/config/binaries/singularity/containers_devel/nextflow/depot.galaxyproject.org-singularity-multiqc-1.21--pyhdfd78af_0.img\"\n\n    input:\n    path quantification\n    path fastqc\n\n    output:\n    path \"*.html\"\n\n    script:\n    \"\"\"\n    multiqc . --filename $quantification\n    \"\"\"\n}\n\nworkflow {\n  index_ch = INDEX(params.transcriptome_file)\n  quant_ch = QUANTIFICATION(index_ch, reads_ch)\n  quant_ch.view()\n\n  fastqc_ch = FASTQC(reads_ch)\n  multiqc_ch = MULTIQC(quant_ch, fastqc_ch)\n}"
   },
   {
-    "objectID": "workshops/4_1_modules.html#modules",
-    "href": "workshops/4_1_modules.html#modules",
+    "objectID": "workshops/4.1_modules.html#modules",
+    "href": "workshops/4.1_modules.html#modules",
     "title": "Nextflow Development - Developing Modularised Workflows",
     "section": "5.1 Modules",
     "text": "5.1 Modules\nNextflow DSL2 allows for the definition of stand-alone module scripts that can be included and shared across multiple workflows. Each module can contain its own process or workflow definition."
   },
   {
-    "objectID": "workshops/4_1_modules.html#importing-modules",
-    "href": "workshops/4_1_modules.html#importing-modules",
+    "objectID": "workshops/4.1_modules.html#importing-modules",
+    "href": "workshops/4.1_modules.html#importing-modules",
     "title": "Nextflow Development - Developing Modularised Workflows",
     "section": "5.1.1. Importing modules",
     "text": "5.1.1. Importing modules\nComponents defined in the module script can be imported into other Nextflow scripts using the include statement. This allows you to store these components in one or more file(s) that they can be re-used in multiple workflows.\nUsing the rnaseq.nf example, you can achieve this by:\nCreating a file called modules.nf in the top-level directory. Copying and pasting all process definitions for INDEX, QUANTIFICATION, FASTQC and MULTIQC into modules.nf. Removing the process definitions in the rnaseq.nf script. Importing the processes from modules.nf within the rnaseq.nf script anywhere above the workflow definition:\ninclude { INDEX } from './modules.nf'\ninclude { QUANTIFICATION } from './modules.nf'\ninclude { FASTQC } from './modules.nf'\ninclude { MULTIQC } from './modules.nf'\n\n\n\n\n\n\nTip\n\n\n\nIn general, you would use relative paths to define the location of the module scripts using the ./prefix.\n\n\nExercise\nCreate a modules.nf file with the INDEX, QUANTIFICATION, FASTQC and MULTIQC from rnaseq.nf. Then remove these processes from rnaseq.nf and include them in the workflow using the include definitions shown above.\n\n\n\n\n\n\nSolution\n\n\n\n\n\nThe rnaseq.nf script should look similar to this:\nparams.reads = \"/scratch/users/.../nf-training/data/ggal/*_{1,2}.fq\"\nparams.transcriptome_file = \"/scratch/users/.../nf-training/ggal/transcriptome.fa\"\nparams.multiqc = \"/scratch/users/.../nf-training/multiqc\"\n\nreads_ch = Channel.fromFilePairs(\"$params.reads\")\n\ninclude { INDEX } from './modules.nf'\ninclude { QUANTIFICATION } from './modules.nf'\ninclude { FASTQC } from './modules.nf'\ninclude { MULTIQC } from './modules.nf'\n\nworkflow {\n  index_ch = INDEX(params.transcriptome_file)\n  quant_ch = QUANTIFICATION(index_ch, reads_ch)\n  quant_ch.view()\n\n  fastqc_ch = FASTQC(reads_ch)\n  multiqc_ch = MULTIQC(quant_ch, fastqc_ch)\n}\n\n\n\nRun the pipeline to check if the module import is successful\nnextflow run rnaseq.nf --outdir \"results\" -resume\n\n\n\n\n\n\nChallenge\nTry modularising the modules.nf even further to achieve a setup of one tool per module (can be one or more processes), similar to the setup used by most nf-core pipelines\nnfcore/rna-seq\n  | modules\n    | local\n      | multiqc\n      | deseq2_qc\n    | nf-core\n      | fastqc\n      | salmon\n        | index\n          | main.nf\n        | quant\n          | main.nf"
   },
   {
-    "objectID": "workshops/4_1_modules.html#multiple-imports",
-    "href": "workshops/4_1_modules.html#multiple-imports",
+    "objectID": "workshops/4.1_modules.html#multiple-imports",
+    "href": "workshops/4.1_modules.html#multiple-imports",
     "title": "Nextflow Development - Developing Modularised Workflows",
     "section": "5.1.2. Multiple imports",
     "text": "5.1.2. Multiple imports\nIf a Nextflow module script contains multiple process definitions they can also be imported using a single include statement as shown in the example below:\nparams.reads = \"/scratch/users/.../nf-training/data/ggal/*_{1,2}.fq\"\nparams.transcriptome_file = \"/scratch/users/.../nf-training/ggal/transcriptome.fa\"\nparams.multiqc = \"/scratch/users/.../nf-training/multiqc\"\nreads_ch = Channel.fromFilePairs(\"$params.reads\")\n\ninclude { INDEX; QUANTIFICATION; FASTQC; MULTIQC } from './modules.nf'\n\nworkflow {\n  index_ch = INDEX(params.transcriptome_file)\n  quant_ch = QUANTIFICATION(index_ch, reads_ch)\n  fastqc_ch = FASTQC(reads_ch)\n  multiqc_ch = MULTIQC(quant_ch, fastqc_ch)\n}"
   },
   {
-    "objectID": "workshops/4_1_modules.html#module-aliases",
-    "href": "workshops/4_1_modules.html#module-aliases",
+    "objectID": "workshops/4.1_modules.html#module-aliases",
+    "href": "workshops/4.1_modules.html#module-aliases",
     "title": "Nextflow Development - Developing Modularised Workflows",
     "section": "5.1.3 Module aliases",
     "text": "5.1.3 Module aliases\nWhen including a module component it is possible to specify a name alias using the as declaration. This allows the inclusion and the invocation of the same component multiple times using different names:\nparams.reads = \"/scratch/users/.../nf-training/data/ggal/*_{1,2}.fq\"\nparams.transcriptome_file = \"/scratch/users/.../nf-training/ggal/transcriptome.fa\"\nparams.multiqc = \"/scratch/users/.../nf-training/multiqc\"\n\nreads_ch = Channel.fromFilePairs(\"$params.reads\")\n\ninclude { INDEX } from './modules.nf'\ninclude { QUANTIFICATION as QT } from './modules.nf'\ninclude { FASTQC as FASTQC_one } from './modules.nf'\ninclude { FASTQC as FASTQC_two } from './modules.nf'\ninclude { MULTIQC } from './modules.nf'\ninclude { TRIMGALORE } from './modules/trimgalore.nf'\n\nworkflow {\n  index_ch = INDEX(params.transcriptome_file)\n  quant_ch = QT(index_ch, reads_ch)\n  fastqc_ch = FASTQC_one(reads_ch)\n  trimgalore_out_ch = TRIMGALORE(reads_ch).reads\n  fastqc_cleaned_ch = FASTQC_two(trimgalore_out_ch)\n\n  multiqc_ch = MULTIQC(quant_ch, fastqc_ch)\n}\nprocess TRIMGALORE {\n  container '/config/binaries/singularity/containers_devel/nextflow/depot.galaxyproject.org-singularity-trim-galore-0.6.6--0.img' \n\n  input:\n    tuple val(sample_id), path(reads)\n  \n  output:\n    tuple val(sample_id), path(\"*{3prime,5prime,trimmed,val}*.fq.gz\"), emit: reads\n    tuple val(sample_id), path(\"*report.txt\")                        , emit: log     , optional: true\n    tuple val(sample_id), path(\"*unpaired*.fq.gz\")                   , emit: unpaired, optional: true\n    tuple val(sample_id), path(\"*.html\")                             , emit: html    , optional: true\n    tuple val(sample_id), path(\"*.zip\")                              , emit: zip     , optional: true\n\n  script:\n    \"\"\"\n    trim_galore \\\\\n      --paired \\\\\n      --gzip \\\\\n      ${reads[0]} \\\\\n      ${reads[1]}\n    \"\"\"\n\n}\nNote how the QUANTIFICATION process is now being refer to as QT, and FASTQC process is imported twice, each time with a different alias, and how these aliases are used to invoke the processes.\n\nN E X T F L O W  ~  version 23.04.1\nLaunching `rnaseq.nf` [sharp_meitner] DSL2 - revision: 6afd5bf37c\nexecutor &gt;  local (16)\n[c7/56160a] process &gt; INDEX          [100%] 1 of 1 ✔\n[75/cb99dd] process &gt; QT (3)         [100%] 3 of 3 ✔\n[d9/e298c6] process &gt; FASTQC_one (3) [100%] 3 of 3 ✔\n[5e/7ccc39] process &gt; TRIMGALORE (3) [100%] 3 of 3 ✔\n[a3/3a1e2e] process &gt; FASTQC_two (3) [100%] 3 of 3 ✔\n[e1/411323] process &gt; MULTIQC (3)    [100%] 3 of 3 ✔\n\n\n\n\n\n\nWarning\n\n\n\nWhat do you think will happen if FASTQC is imported only once without alias, but used twice within the workflow?\n\n\n\n\n\n\nAnswer\n\n\n\n\n\nProcess 'FASTQC' has been already used -- If you need to reuse the same component, include it with a different name or include it in a different workflow context"
   },
   {
-    "objectID": "workshops/4_1_modules.html#workflow-definition",
-    "href": "workshops/4_1_modules.html#workflow-definition",
+    "objectID": "workshops/4.1_modules.html#workflow-definition",
+    "href": "workshops/4.1_modules.html#workflow-definition",
     "title": "Nextflow Development - Developing Modularised Workflows",
     "section": "5.2 Workflow definition",
     "text": "5.2 Workflow definition\nThe workflow scope allows the definition of components that define the invocation of one or more processes or operators:\n\nparams.reads = \"/scratch/users/.../nf-training/data/ggal/*_{1,2}.fq\"\nparams.transcriptome_file = \"/scratch/users/.../nf-training/ggal/transcriptome.fa\"\nparams.multiqc = \"/scratch/users/.../nf-training/multiqc\"\n\nreads_ch = Channel.fromFilePairs(\"$params.reads\")\n\ninclude { INDEX } from './modules.nf'\ninclude { QUANTIFICATION as QT } from './modules.nf'\ninclude { FASTQC as FASTQC_one } from './modules.nf'\ninclude { FASTQC as FASTQC_two } from './modules.nf'\ninclude { MULTIQC } from './modules.nf'\ninclude { TRIMGALORE } from './modules/trimgalore.nf'\n\nworkflow my_workflow {\n  index_ch = INDEX(params.transcriptome_file)\n  quant_ch = QT(index_ch, reads_ch)\n  fastqc_ch = FASTQC_one(reads_ch)\n  trimgalore_out_ch = TRIMGALORE(reads_ch).reads\n  fastqc_cleaned_ch = FASTQC_two(trimgalore_out_ch)\n\n  multiqc_ch = MULTIQC(quant_ch, fastqc_ch)\n}\n\nworkflow {\n  my_workflow()\n}\nFor example, the snippet above defines a workflow named my_workflow, that is invoked via another workflow definition."
   },
   {
-    "objectID": "workshops/4_1_modules.html#workflow-inputs",
-    "href": "workshops/4_1_modules.html#workflow-inputs",
+    "objectID": "workshops/4.1_modules.html#workflow-inputs",
+    "href": "workshops/4.1_modules.html#workflow-inputs",
     "title": "Nextflow Development - Developing Modularised Workflows",
     "section": "5.2.1 Workflow inputs",
     "text": "5.2.1 Workflow inputs\nA workflow component can declare one or more input channels using the take statement. When the take statement is used, the workflow definition needs to be declared within the main block.\nFor example:\n\nparams.reads = \"/scratch/users/.../nf-training/data/ggal/*_{1,2}.fq\"\nparams.transcriptome_file = \"/scratch/users/.../nf-training/ggal/transcriptome.fa\"\nparams.multiqc = \"/scratch/users/.../nf-training/multiqc\"\n\nreads_ch = Channel.fromFilePairs(\"$params.reads\")\n\ninclude { INDEX } from './modules.nf'\ninclude { QUANTIFICATION as QT } from './modules.nf'\ninclude { FASTQC as FASTQC_one } from './modules.nf'\ninclude { FASTQC as FASTQC_two } from './modules.nf'\ninclude { MULTIQC } from './modules.nf'\ninclude { TRIMGALORE } from './modules/trimgalore.nf'\n\nworkflow my_workflow {\n  take:\n  transcriptome_file\n  reads_ch\n\n  main:\n  index_ch = INDEX(transcriptome_file)\n  quant_ch = QT(index_ch, reads_ch)\n  fastqc_ch = FASTQC_one(reads_ch)\n  trimgalore_out_ch = TRIMGALORE(reads_ch).reads\n  fastqc_cleaned_ch = FASTQC_two(trimgalore_out_ch)\n\n  multiqc_ch = MULTIQC(quant_ch, fastqc_ch)\n}\nThe input for the workflowcan then be specified as an argument:\nworkflow {\n  my_workflow(Channel.of(params.transcriptome_file), reads_ch)\n}"
   },
   {
-    "objectID": "workshops/4_1_modules.html#workflow-outputs",
-    "href": "workshops/4_1_modules.html#workflow-outputs",
+    "objectID": "workshops/4.1_modules.html#workflow-outputs",
+    "href": "workshops/4.1_modules.html#workflow-outputs",
     "title": "Nextflow Development - Developing Modularised Workflows",
     "section": "5.2.2 Workflow outputs",
     "text": "5.2.2 Workflow outputs\nA workflow can declare one or more output channels using the emit statement. For example:\n\nparams.reads = \"/scratch/users/.../nf-training/data/ggal/*_{1,2}.fq\"\nparams.transcriptome_file = \"/scratch/users/.../nf-training/ggal/transcriptome.fa\"\nparams.multiqc = \"/scratch/users/.../nf-training/multiqc\"\n\nreads_ch = Channel.fromFilePairs(\"$params.reads\")\n\ninclude { INDEX } from './modules.nf'\ninclude { QUANTIFICATION as QT } from './modules.nf'\ninclude { FASTQC as FASTQC_one } from './modules.nf'\ninclude { FASTQC as FASTQC_two } from './modules.nf'\ninclude { MULTIQC } from './modules.nf'\ninclude { TRIMGALORE } from './modules/trimgalore.nf'\n\nworkflow my_workflow {\n  take:\n  transcriptome_file\n  reads_ch\n\n  main:\n  index_ch = INDEX(transcriptome_file)\n  quant_ch = QT(index_ch, reads_ch)\n  fastqc_ch = FASTQC_one(reads_ch)\n  trimgalore_out_ch = TRIMGALORE(reads_ch).reads\n  fastqc_cleaned_ch = FASTQC_two(trimgalore_out_ch)\n  multiqc_ch = MULTIQC(quant_ch, fastqc_ch)\n\n  emit:\n  quant_ch\n\n}\n\nworkflow {\n  my_workflow(Channel.of(params.transcriptome_file), reads_ch)\n  my_workflow.out.view()\n}\nAs a result, you can use the my_workflow.out notation to access the outputs of my_workflow in the invoking workflow.\nYou can also declare named outputs within the emit block.\n  emit:\n  my_wf_output = quant_ch\nworkflow {\n  my_workflow(Channel.of(params.transcriptome_file), reads_ch)\n  my_workflow.out.my_wf_output.view()\n}\nThe result of the above snippet can then be accessed using my_workflow.out.my_wf_output."
   },
   {
-    "objectID": "workshops/4_1_modules.html#calling-named-workflows",
-    "href": "workshops/4_1_modules.html#calling-named-workflows",
+    "objectID": "workshops/4.1_modules.html#calling-named-workflows",
+    "href": "workshops/4.1_modules.html#calling-named-workflows",
     "title": "Nextflow Development - Developing Modularised Workflows",
     "section": "5.2.3 Calling named workflows",
     "text": "5.2.3 Calling named workflows\nWithin a main.nf script (called rnaseq.nf in our example) you can also have multiple workflows. In which case you may want to call a specific workflow when running the code. For this you could use the entrypoint call -entry &lt;workflow_name&gt;.\nThe following snippet has two named workflows (quant_wf and qc_wf):\nparams.reads = \"/scratch/users/.../nf-training/data/ggal/*_{1,2}.fq\"\nparams.transcriptome_file = \"/scratch/users/.../nf-training/ggal/transcriptome.fa\"\nparams.multiqc = \"/scratch/users/.../nf-training/multiqc\"\n\nreads_ch = Channel.fromFilePairs(\"$params.reads\")\n\ninclude { INDEX } from './modules.nf'\ninclude { QUANTIFICATION as QT } from './modules.nf'\ninclude { FASTQC as FASTQC_one } from './modules.nf'\ninclude { FASTQC as FASTQC_two } from './modules.nf'\ninclude { MULTIQC } from './modules.nf'\ninclude { TRIMGALORE } from './modules/trimgalore.nf'\n\nworkflow quant_wf {\n  index_ch = INDEX(params.transcriptome_file)\n  quant_ch = QT(index_ch, reads_ch)\n}\n\nworkflow qc_wf {\n  fastqc_ch = FASTQC_one(reads_ch)\n  trimgalore_out_ch = TRIMGALORE(reads_ch).reads\n  fastqc_cleaned_ch = FASTQC_two(trimgalore_out_ch)\n  multiqc_ch = MULTIQC(quant_ch, fastqc_ch)\n}\n\nworkflow {\n  quant_wf(Channel.of(params.transcriptome_file), reads_ch)\n  qc_wf(reads_ch, quant_wf.out)\n}\nBy default, running the main.nf (called rnaseq.nf in our example) will execute the main workflow block.\nnextflow run runseq.nf --outdir \"results\"\nN E X T F L O W  ~  version 23.04.1\nLaunching `rnaseq4.nf` [goofy_mahavira] DSL2 - revision: 2125d44217\nexecutor &gt;  local (12)\n[38/e34e41] process &gt; quant_wf:INDEX (1)   [100%] 1 of 1 ✔\n[9e/afc9e0] process &gt; quant_wf:QT (1)      [100%] 1 of 1 ✔\n[c1/dc84fe] process &gt; qc_wf:FASTQC_one (3) [100%] 3 of 3 ✔\n[2b/48680f] process &gt; qc_wf:TRIMGALORE (3) [100%] 3 of 3 ✔\n[13/71e240] process &gt; qc_wf:FASTQC_two (3) [100%] 3 of 3 ✔\n[07/cf203f] process &gt; qc_wf:MULTIQC (1)    [100%] 1 of 1 ✔\nNote that the process is now annotated with &lt;workflow-name&gt;:&lt;process-name&gt;\nBut you can choose which workflow to run by using the entry flag:\nnextflow run runseq.nf --outdir \"results\" -entry quant_wf\nN E X T F L O W  ~  version 23.04.1\nLaunching `rnaseq5.nf` [magical_picasso] DSL2 - revision: 4ddb8eaa12\nexecutor &gt;  local (4)\n[a7/152090] process &gt; quant_wf:INDEX  [100%] 1 of 1 ✔\n[cd/612b4a] process &gt; quant_wf:QT (1) [100%] 3 of 3 ✔"
   },
   {
-    "objectID": "workshops/4_1_modules.html#importing-subworkflows",
-    "href": "workshops/4_1_modules.html#importing-subworkflows",
+    "objectID": "workshops/4.1_modules.html#importing-subworkflows",
+    "href": "workshops/4.1_modules.html#importing-subworkflows",
     "title": "Nextflow Development - Developing Modularised Workflows",
     "section": "5.2.4 Importing Subworkflows",
     "text": "5.2.4 Importing Subworkflows\nSimilar to module script, workflow or sub-workflow can also be imported into other Nextflow scripts using the include statement. This allows you to store these components in one or more file(s) that they can be re-used in multiple workflows.\nAgain using the rnaseq.nf example, you can achieve this by:\nCreating a file called subworkflows.nf in the top-level directory. Copying and pasting all workflow definitions for quant_wf and qc_wf into subworkflows.nf. Removing the workflow definitions in the rnaseq.nf script. Importing the sub-workflows from subworkflows.nf within the rnaseq.nf script anywhere above the workflow definition:\ninclude { QUANT_WF } from './subworkflows.nf'\ninclude { QC_WF } from './subworkflows.nf'\nExercise\nCreate a subworkflows.nf file with the QUANT_WF, and QC_WF from the previous sections. Then remove these processes from rnaseq.nf and include them in the workflow using the include definitions shown above.\n\n\n\n\n\n\nSolution\n\n\n\n\n\nThe rnaseq.nf script should look similar to this:\nparams.reads = \"/scratch/users/.../nf-training/data/ggal/*_{1,2}.fq\"\nparams.transcriptome_file = \"/scratch/users/.../nf-training/ggal/transcriptome.fa\"\nparams.multiqc = \"/scratch/users/.../nf-training/multiqc\"\n\nreads_ch = Channel.fromFilePairs(\"$params.reads\")\n\ninclude { QUANT_WF; QC_WF } from './subworkflows.nf'\n\nworkflow {\n  QUANT_WF(Channel.of(params.transcriptome_file), reads_ch)\n  QC_WF(reads_ch, QUANT_WF.out)\n}\nand the subworkflows.nf script should look similar to this:\ninclude { INDEX } from './modules.nf'\ninclude { QUANTIFICATION as QT } from './modules.nf'\ninclude { FASTQC as FASTQC_one } from './modules.nf'\ninclude { FASTQC as FASTQC_two } from './modules.nf'\ninclude { MULTIQC } from './modules.nf'\ninclude { TRIMGALORE } from './modules/trimgalore.nf'\n\nworkflow QUANT_WF{\n  take:\n  transcriptome_file\n  reads_ch\n\n  main:\n  index_ch = INDEX(transcriptome_file)\n  quant_ch = QT(index_ch, reads_ch)\n\n  emit:\n  quant_ch\n}\n\nworkflow QC_WF{\n  take:\n  reads_ch\n  quant_ch\n\n  main:\n  fastqc_ch = FASTQC_one(reads_ch)\n  trimgalore_out_ch = TRIMGALORE(reads_ch).reads\n  fastqc_cleaned_ch = FASTQC_two(trimgalore_out_ch)\n  multiqc_ch = MULTIQC(quant_ch, fastqc_ch)\n\n  emit:\n  multiqc_ch\n}\n\n\n\nRun the pipeline to check if the workflow import is successful\nnextflow run rnaseq.nf --outdir \"results\" -resume\n\n\n\n\n\n\nChallenge\nStructure modules and subworkflows similar to the setup used by most nf-core pipelines (e.g. nf-core/rnaseq)"
   },
   {
-    "objectID": "workshops/4_1_modules.html#workflow-structure",
-    "href": "workshops/4_1_modules.html#workflow-structure",
+    "objectID": "workshops/4.1_modules.html#workflow-structure",
+    "href": "workshops/4.1_modules.html#workflow-structure",
     "title": "Nextflow Development - Developing Modularised Workflows",
     "section": "5.3 Workflow Structure",
     "text": "5.3 Workflow Structure\nThere are three directories in a Nextflow workflow repository that have a special purpose:"
   },
   {
-    "objectID": "workshops/4_1_modules.html#bin",
-    "href": "workshops/4_1_modules.html#bin",
+    "objectID": "workshops/4.1_modules.html#bin",
+    "href": "workshops/4.1_modules.html#bin",
     "title": "Nextflow Development - Developing Modularised Workflows",
     "section": "5.3.1 ./bin",
     "text": "5.3.1 ./bin\nThe bin directory (if it exists) is always added to the $PATH for all tasks. If the tasks are performed on a remote machine, the directory is copied across to the new machine before the task begins. This Nextflow feature is designed to make it easy to include accessory scripts directly in the workflow without having to commit those scripts into the container. This feature also ensures that the scripts used inside of the workflow move on the same revision schedule as the workflow itself.\nIt is important to know that Nextflow will take care of updating $PATH and ensuring the files are available wherever the task is running, but will not change the permissions of any files in that directory. If a file is called by a task as an executable, the workflow developer must ensure that the file has the correct permissions to be executed.\nFor example, let’s say we have a small R script that produces a csv and a tsv:\n\n#!/usr/bin/env Rscript\nlibrary(tidyverse)\n\nplot &lt;- ggplot(mpg, aes(displ, hwy, colour = class)) + geom_point()\nmtcars |&gt; write_tsv(\"cars.tsv\")\nggsave(\"cars.png\", plot = plot)\nWe’d like to use this script in a simple workflow car.nf:\nprocess PlotCars {\n    // container 'rocker/tidyverse:latest'\n    container '/config/binaries/singularity/containers_devel/nextflow/r-dinoflow_0.1.1.sif'\n\n    output:\n    path(\"*.png\"), emit: \"plot\"\n    path(\"*.tsv\"), emit: \"table\"\n\n    script:\n    \"\"\"\n    cars.R\n    \"\"\"\n}\n\nworkflow {\n    PlotCars()\n\n    PlotCars.out.table | view { \"Found a tsv: $it\" }\n    PlotCars.out.plot | view { \"Found a png: $it\" }\n}\nTo do this, we can create the bin directory, write our R script into the directory. Finally, and crucially, we make the script executable:\nchmod +x bin/cars.R\n\n\n\n\n\n\nWarning\n\n\n\nAlways ensure that your scripts are executable. The scripts will not be available to your Nextflow processes without this step.\nYou will get the following error if permission is not set correctly.\nERROR ~ Error executing process &gt; 'PlotCars'\n\nCaused by:\n  Process `PlotCars` terminated with an error exit status (126)\n\nCommand executed:\n\n  cars.R\n\nCommand exit status:\n  126\n\nCommand output:\n  (empty)\n\nCommand error:\n  .command.sh: line 2: /scratch/users/.../bin/cars.R: Permission denied\n\nWork dir:\n  /scratch/users/.../work/6b/86d3d0060266b1ca515cc851d23890\n\nTip: you can replicate the issue by changing to the process work dir and entering the command `bash .command.run`\n\n -- Check '.nextflow.log' file for details\n\n\nLet’s run the script and see what Nextflow is doing for us behind the scenes:\nnextflow run car.nf\nand then inspect the .command.run file that Nextflow has generated\nYou’ll notice a nxf_container_env bash function that appends our bin directory to $PATH:\nnxf_container_env() {\ncat &lt;&lt; EOF\nexport PATH=\"\\$PATH:/scratch/users/&lt;your-user-name&gt;/.../bin\"\nEOF\n}\nWhen working on the cloud, Nextflow will also ensure that the bin directory is copied onto the virtual machine running your task in addition to the modification of $PATH."
   },
   {
-    "objectID": "workshops/4_1_modules.html#templates",
-    "href": "workshops/4_1_modules.html#templates",
+    "objectID": "workshops/4.1_modules.html#templates",
+    "href": "workshops/4.1_modules.html#templates",
     "title": "Nextflow Development - Developing Modularised Workflows",
     "section": "5.3.2 ./templates",
     "text": "5.3.2 ./templates\nIf a process script block is becoming too long, it can be moved to a template file. The template file can then be imported into the process script block using the template method. This is useful for keeping the process block tidy and readable. Nextflow’s use of $ to indicate variables also allows for directly testing the template file by running it as a script.\nFor example:\n# cat templates/my_script.sh\n\n#!/bin/bash\necho \"process started at `date`\"\necho $name\necho \"process completed\"\nprocess SayHiTemplate {\n    debug true\n    input: \n      val(name)\n\n    script: \n      template 'my_script.sh'\n}\n\nworkflow {\n    SayHiTemplate(\"Hello World\")\n}\nBy default, Nextflow looks for the my_script.sh template file in the templates directory located alongside the Nextflow script and/or the module script in which the process is defined. Any other location can be specified by using an absolute template path."
   },
   {
-    "objectID": "workshops/4_1_modules.html#lib",
-    "href": "workshops/4_1_modules.html#lib",
+    "objectID": "workshops/4.1_modules.html#lib",
+    "href": "workshops/4.1_modules.html#lib",
     "title": "Nextflow Development - Developing Modularised Workflows",
     "section": "5.3.3 ./lib",
     "text": "5.3.3 ./lib\nIn the next chapter, we will start looking into adding small helper Groovy functions to the main.nf file. It may at times be helpful to bundle functionality into a new Groovy class. Any classes defined in the lib directory are available for use in the workflow - both main.nf and any imported modules.\nClasses defined in lib directory can be used for a variety of purposes. For example, the nf-core/rnaseq workflow uses five custom classes:\n\nNfcoreSchema.groovy for parsing the schema.json file and validating the workflow parameters.\nNfcoreTemplate.groovy for email templating and nf-core utility functions.\nUtils.groovy for provision of a single checkCondaChannels method.\nWorkflowMain.groovy for workflow setup and to call the NfcoreTemplate class.\nWorkflowRnaseq.groovy for the workflow-specific functions.\n\nThe classes listed above all provide utility executed at the beginning of a workflow, and are generally used to “set up” the workflow. However, classes defined in lib can also be used to provide functionality to the workflow itself."
   },
   {
-    "objectID": "workshops/4_1_modules.html#groovy-functions-and-libraries",
-    "href": "workshops/4_1_modules.html#groovy-functions-and-libraries",
+    "objectID": "workshops/4.1_modules.html#groovy-functions-and-libraries",
+    "href": "workshops/4.1_modules.html#groovy-functions-and-libraries",
     "title": "Nextflow Development - Developing Modularised Workflows",
     "section": "6. Groovy Functions and Libraries",
     "text": "6. Groovy Functions and Libraries\nNextflow is a domain specific language (DSL) implemented on top of the Groovy programming language, which in turn is a super-set of the Java programming language. This means that Nextflow can run any Groovy or Java code.\nYou have already been using some Groovy code in the previous sections, but now it’s time to learn more about it."
   },
   {
-    "objectID": "workshops/4_1_modules.html#some-useful-groovy-introduction",
-    "href": "workshops/4_1_modules.html#some-useful-groovy-introduction",
+    "objectID": "workshops/4.1_modules.html#some-useful-groovy-introduction",
+    "href": "workshops/4.1_modules.html#some-useful-groovy-introduction",
     "title": "Nextflow Development - Developing Modularised Workflows",
     "section": "6.1 Some useful groovy introduction",
     "text": "6.1 Some useful groovy introduction"
   },
   {
-    "objectID": "workshops/4_1_modules.html#variables",
-    "href": "workshops/4_1_modules.html#variables",
+    "objectID": "workshops/4.1_modules.html#variables",
+    "href": "workshops/4.1_modules.html#variables",
     "title": "Nextflow Development - Developing Modularised Workflows",
     "section": "6.1.1 Variables",
     "text": "6.1.1 Variables\nTo define a variable, simply assign a value to it:\nx = 1\nprintln x\n\nx = new java.util.Date()\nprintln x\n\nx = -3.1499392\nprintln x\n\nx = false\nprintln x\n\nx = \"Hi\"\nprintln x\n&gt;&gt; nextflow run variable.nf\n\nN E X T F L O W  ~  version 23.04.1\nLaunching `variable.nf` [trusting_moriondo] DSL2 - revision: ee74c86d04\n1\nWed Jun 05 03:45:19 AEST 2024\n-3.1499392\nfalse\nHi\nLocal variables are defined using the def keyword:\ndef x = 'foo'\nThe def should be always used when defining variables local to a function or a closure."
   },
   {
-    "objectID": "workshops/4_1_modules.html#maps",
-    "href": "workshops/4_1_modules.html#maps",
+    "objectID": "workshops/4.1_modules.html#maps",
+    "href": "workshops/4.1_modules.html#maps",
     "title": "Nextflow Development - Developing Modularised Workflows",
     "section": "6.1.2 Maps",
     "text": "6.1.2 Maps\nMaps are like lists that have an arbitrary key instead of an integer (allow key-value pair).\nmap = [a: 0, b: 1, c: 2]\nMaps can be accessed in a conventional square-bracket syntax or as if the key was a property of the map.\nmap = [a: 0, b: 1, c: 2]\n\nassert map['a'] == 0 \nassert map.b == 1 \nassert map.get('c') == 2 \nTo add data or to modify a map, the syntax is similar to adding values to a list:\nmap = [a: 0, b: 1, c: 2]\n\nmap['a'] = 'x' \nmap.b = 'y' \nmap.put('c', 'z') \nassert map == [a: 'x', b: 'y', c: 'z']\nMap objects implement all methods provided by the java.util.Map interface, plus the extension methods provided by Groovy."
   },
   {
-    "objectID": "workshops/4_1_modules.html#if-statement",
-    "href": "workshops/4_1_modules.html#if-statement",
+    "objectID": "workshops/4.1_modules.html#if-statement",
+    "href": "workshops/4.1_modules.html#if-statement",
     "title": "Nextflow Development - Developing Modularised Workflows",
     "section": "6.1.3 If statement",
     "text": "6.1.3 If statement\nThe if statement uses the same syntax common in other programming languages, such as Java, C, and JavaScript.\nif (&lt; boolean expression &gt;) {\n    // true branch\n}\nelse {\n    // false branch\n}\nThe else branch is optional. Also, the curly brackets are optional when the branch defines just a single statement.\nx = 1\nif (x &gt; 10)\n    println 'Hello'\nIn some cases it can be useful to replace the if statement with a ternary expression (aka a conditional expression):\nprintln list ? list : 'The list is empty'\nThe previous statement can be further simplified using the Elvis operator:\nprintln list ?: 'The list is empty'"
   },
   {
-    "objectID": "workshops/4_1_modules.html#functions",
-    "href": "workshops/4_1_modules.html#functions",
+    "objectID": "workshops/4.1_modules.html#functions",
+    "href": "workshops/4.1_modules.html#functions",
     "title": "Nextflow Development - Developing Modularised Workflows",
     "section": "6.1.4 Functions",
     "text": "6.1.4 Functions\nIt is possible to define a custom function into a script:\ndef fib(int n) {\n    return n &lt; 2 ? 1 : fib(n - 1) + fib(n - 2)\n}\n\nassert fib(10)==89\nA function can take multiple arguments separating them with a comma.\nThe return keyword can be omitted and the function implicitly returns the value of the last evaluated expression. Also, explicit types can be omitted, though not recommended:\ndef fact(n) {\n    n &gt; 1 ? n * fact(n - 1) : 1\n}\n\nassert fact(5) == 120"
   },
   {
-    "objectID": "workshops/4_1_modules.html#grooovy-library",
-    "href": "workshops/4_1_modules.html#grooovy-library",
+    "objectID": "workshops/4.1_modules.html#grooovy-library",
+    "href": "workshops/4.1_modules.html#grooovy-library",
     "title": "Nextflow Development - Developing Modularised Workflows",
     "section": "6.2 Grooovy Library",
     "text": "6.2 Grooovy Library"
   },
   {
-    "objectID": "workshops/4_1_modules.html#testing",
-    "href": "workshops/4_1_modules.html#testing",
+    "objectID": "workshops/4.1_modules.html#testing",
+    "href": "workshops/4.1_modules.html#testing",
     "title": "Nextflow Development - Developing Modularised Workflows",
     "section": "7. Testing",
     "text": "7. Testing"
   },
   {
-    "objectID": "workshops/4_1_modules.html#stub",
-    "href": "workshops/4_1_modules.html#stub",
+    "objectID": "workshops/4.1_modules.html#stub",
+    "href": "workshops/4.1_modules.html#stub",
     "title": "Nextflow Development - Developing Modularised Workflows",
     "section": "7.1 Stub",
     "text": "7.1 Stub\nYou can define a command stub, which replaces the actual process command when the -stub-run or -stub command-line option is enabled:\n\nprocess INDEX {\n  input:\n    path transcriptome\n\n  output:\n    path 'index'\n\n  script:\n    \"\"\"\n    salmon index --threads $task.cpus -t $transcriptome -i index\n    \"\"\"\n\n  stub:\n    \"\"\"\n    mkdir index\n    touch index/seq.bin\n    touch index/info.json\n    touch index/refseq.bin\n    \"\"\"\n}\nThe stub block can be defined before or after the script block. When the pipeline is executed with the -stub-run option and a process’s stub is not defined, the script block is executed.\nThis feature makes it easier to quickly prototype the workflow logic without using the real commands. The developer can use it to provide a dummy script that mimics the execution of the real one in a quicker manner. In other words, it is a way to perform a dry-run."
   },
   {
-    "objectID": "workshops/4_1_modules.html#test-profile",
-    "href": "workshops/4_1_modules.html#test-profile",
+    "objectID": "workshops/4.1_modules.html#test-profile",
+    "href": "workshops/4.1_modules.html#test-profile",
     "title": "Nextflow Development - Developing Modularised Workflows",
     "section": "7.2 Test profile",
     "text": "7.2 Test profile"
   },
   {
-    "objectID": "workshops/4_1_modules.html#nf-test",
-    "href": "workshops/4_1_modules.html#nf-test",
+    "objectID": "workshops/4.1_modules.html#nf-test",
+    "href": "workshops/4.1_modules.html#nf-test",
     "title": "Nextflow Development - Developing Modularised Workflows",
     "section": "7.3. nf-test",
     "text": "7.3. nf-test\nIt is critical for reproducibility and long-term maintenance to have a way to systematically test that every part of your workflow is doing what it’s supposed to do. To that end, people often focus on top-level tests, in which the workflow is un on some test data from start to finish. This is useful but unfortunately incomplete. You should also implement module-level tests (equivalent to what is called ‘unit tests’ in general software engineering) to verify the functionality of individual components of your workflow, ensuring that each module performs as expected under different conditions and inputs.\nThe nf-test package provides a testing framework that integrates well with Nextflow and makes it straightforward to add both module-level and workflow-level tests to your pipeline. For more background information, read the blog post about nf-test on the nf-core blog.\nSee this tutorial for some examples.\n\nThis workshop is adapted from Fundamentals Training, Advanced Training, Developer Tutorials, and Nextflow Patterns materials from Nextflow and nf-core"
