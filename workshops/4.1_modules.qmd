@@ -906,6 +906,58 @@ The previous statement can be further simplified using the `Elvis operator`:
 println list ?: 'The list is empty'
 ```
 
+**Exercise** 
+
+We are going to turn the `rnaseq.nf` into a conditional workflow with an additional `params.qc_enabled` to set an on/off trigger for the QC parts of the workflow. 
+
+```default
+params.qc_enabled = false
+
+workflow {
+  QUANT_WF(Channel.of(params.transcriptome_file), reads_ch)
+
+  if (params.qc_enabled) {
+  	QC_WF(reads_ch, QUANT_WF.out)
+  }
+}
+```
+
+Run the workflow again:
+
+```default
+nextflow run rnaseq.nf --outdir "results"
+```
+
+We should only see the following two stages being executed. 
+
+```default
+N E X T F L O W  ~  version 23.04.1
+Launching `rnaseq.nf` [hopeful_gautier] DSL2 - revision: 7c50056656
+executor >  local (2)
+[c3/91f695] process > QUANT_WF:INDEX (1) [100%] 1 of 1 ✔
+[1d/fac0d9] process > QUANT_WF:QT (1)    [100%] 1 of 1 ✔
+```
+
+The `params.qc_enabled` can be turn on during execution. 
+```default
+nextflow run rnaseq.nf --outdir "results" --qc_enabled true
+```
+
+::: {.callout-note appearance="simple"}
+**Challenge**
+
+The `trimgalore` currently only supports paired-end read. How do we update this so the same process can be used for both single-end and paired-end? 
+
+For reference, the (simplified) command that we can use for single-end can be as follow:
+
+```default
+  trim_galore \\
+    --gzip \\
+    $reads
+```
+
+:::
+
 ## 6.1.4 Functions
 
 It is possible to define a custom function into a script:
@@ -930,10 +982,6 @@ def fact(n) {
 assert fact(5) == 120
 ```
 
-## 6.2 Grooovy Library
-
-
-
 ## **7. Testing**
 
 ## 7.1 Stub
@@ -943,23 +991,25 @@ You can define a command stub, which replaces the actual process command when th
 ```default
 
 process INDEX {
-  input:
+    container "/config/binaries/singularity/containers_devel/nextflow/depot.galaxyproject.org-singularity-salmon-1.10.1--h7e5ed60_0.img"
+
+    input:
     path transcriptome
 
-  output:
-    path 'index'
+    output:
+    path "salmon_idx"
 
-  script:
+    script:
     """
-    salmon index --threads $task.cpus -t $transcriptome -i index
+    salmon index --threads $task.cpus -t $transcriptome -i salmon_idx
     """
 
-  stub:
+    stub:
     """
-    mkdir index
-    touch index/seq.bin
-    touch index/info.json
-    touch index/refseq.bin
+    mkdir salmon_idx
+    touch salmon_idx/seq.bin
+    touch salmon_idx/info.json
+    touch salmon_idx/refseq.bin
     """
 }
 
@@ -969,12 +1019,60 @@ The `stub` block can be defined before or after the `script` block. When the pip
 
 This feature makes it easier to quickly prototype the workflow logic without using the real commands. The developer can use it to provide a dummy script that mimics the execution of the real one in a quicker manner. In other words, it is a way to perform a dry-run.
 
-## 7.2 Test profile
+**Exercise** 
 
+Try modifying `modules.nf` to add `stub` for the `INDEX` process. 
 
+```default
+    """
+    mkdir salmon_idx
+    touch salmon_idx/seq.bin
+    touch salmon_idx/info.json
+    touch salmon_idx/refseq.bin
+    """
+```
 
+Let's keep the workflow to only run the `INDEX` process, as a new `rnaseq_stub.nf`
 
-## 7.3. nf-test
+```default
+workflow {
+  index_ch = INDEX(params.transcriptome_file)
+}
+```
+
+And run the `rnaseq_stub.nf` with `-stub-run`
+
+```default
+nextflow run rnaseq_stub.nf -stub-run
+```
+
+```default
+N E X T F L O W  ~  version 23.04.1
+Launching `rnaseq.nf` [lonely_albattani] DSL2 - revision: 11fb1399f0
+executor >  local (1)
+[a9/7d3084] process > INDEX [100%] 1 of 1 ✔
+```
+
+The process should look like it is running as normal. But if we inspect the work folder `a9/7d3084`, you will notice that the `salmon_idx` folder actually consists of three empty files that we touch as part of stub. 
+
+```default
+ls -la work/a9/7d3084636d95cba6b81a9ce8125289/salmon_idx/
+total 1
+drwxrwxr-x 2 rlupat rlupat 4096 Jun  5 11:05 .
+drwxrwxr-x 3 rlupat rlupat 4096 Jun  5 11:05 ..
+-rw-rw-r-- 1 rlupat rlupat    0 Jun  5 11:05 info.json
+-rw-rw-r-- 1 rlupat rlupat    0 Jun  5 11:05 refseq.bin
+-rw-rw-r-- 1 rlupat rlupat    0 Jun  5 11:05 seq.bin
+```
+
+::: {.callout-note appearance="simple"}
+**Challenge**
+
+Add stubs to all modules in `modules.nf` and try running the full workflow in a stub. 
+
+:::
+
+## 7.2. nf-test
 
 It is critical for reproducibility and long-term maintenance to have a way to systematically test that every part of your workflow is doing what it's supposed to do. To that end, people often focus on top-level tests, in which the workflow is un on some test data from start to finish. This is useful but unfortunately incomplete. You should also implement module-level tests (equivalent to what is called 'unit tests' in general software engineering) to verify the functionality of individual components of your workflow, ensuring that each module performs as expected under different conditions and inputs.
 
