@@ -48,7 +48,7 @@ If you have any trouble, please get in contact with us ASAP via Slack/Teams.
 | Session kick off| Session kick off: Discuss learning outcomes and finalising workspace setup | Every week |
 | [Basic to Create a Nextflow Workflow](../workshops/3.1_creating_a_workflow.html)| Introduction to nextflow channels, processes, data types and workflows | 29th May 2024 | 
 | [Developing Modularised Workflows](../workshops/4.1_modules.html) | Introduction to modules imports, sub-workflows, setting up test-profile, and common useful groovy functions | 5th Jun 2024 | 
-| Working with nf-core Templates | Introduction to developing nextflow workflow with nf-core templates | 12th Jun 2024 | 
+| [Working with nf-core Templates](../workshops/5.1_nf_core_template.html) | Introduction to developing nextflow workflow with nf-core templates | 12th Jun 2024 | 
 | Working with Nextflow Built-in Functions | Introduction to nextflow operators, metadata propagation, grouping, and splitting | 19th Jun 2024 | 
 
 

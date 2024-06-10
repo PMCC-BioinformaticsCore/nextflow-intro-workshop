@@ -1,0 +1,242 @@
+---
+title: "**Nextflow Development - Developing Modularised Workflows**"
+output:
+  html_document:
+    toc: false
+    toc_float: false
+from: markdown+emoji
+---
+
+::: callout-tip
+
+### Objectives{.unlisted}
+
+
+:::
+
+## **Environment Setup**
+
+Set up an interactive shell to run our Nextflow workflow: 
+
+``` default
+srun --pty -p prod_short --mem 8GB --mincpus 2 -t 0-2:00 bash
+```
+
+Load the required modules to run Nextflow:
+
+``` default
+module load nextflow/23.04.1
+module load singularity/3.7.3
+```
+
+Set the singularity cache environment variable:
+
+```default
+export NXF_SINGULARITY_CACHEDIR=/config/binaries/singularity/containers_devel/nextflow
+```
+
+Singularity images downloaded by workflow executions will now be stored in this directory.
+
+You may want to include these, or other environmental variables, in your `.bashrc` file (or alternate) that is loaded when you log in so you don’t need to export variables every session. A complete list of environment variables can be found [here](https://www.nextflow.io/docs/latest/config.html#environment-variables).
+
+Set up a python virtual environment with [nf-core/tools](https://nf-co.re/docs/nf-core-tools) installed:
+
+```default
+module load python/3.11.2
+python -m venv /scratch/users/${USER}/nfcorevenv
+
+source /scratch/users/${USER}/nfcorevenv/bin/activate
+
+pip install nf-core==2.14.1
+```
+
+## **5. Nf-core**
+nf-core is a **community** effort to collect a curated set of **analysis workflows** built using Nextflow.
+
+nf-core provides a standardized set of **best practices**, **guidelines**, and **templates** for building and sharing bioinformatics workflows. These workflows are designed to be **modular**, **scalable**, and **portable**, allowing researchers to easily adapt and execute them using their own data and compute resources.
+
+The community is a diverse group of bioinformaticians, developers, and researchers from around the world who collaborate on **developing** and **maintaining** a growing collection of high-quality workflows. These workflows cover a range of applications, including transcriptomics, proteomics, and metagenomics.
+
+One of the key benefits of nf-core is that it promotes **open development**, **testing**, and **peer review**, ensuring that the workflows are robust, well-documented, and validated against real-world datasets. This helps to increase the reliability and reproducibility of bioinformatics analyses and ultimately enables researchers to accelerate their scientific discoveries.
+
+nf-core is published in Nature Biotechnology: [Nat Biotechnol 38, 276–278 (2020). Nature Biotechnology](https://www.nature.com/articles/s41587-020-0439-x)
+
+**Key Features of nf-core workflows**
+
+- **Documentation**
+    - nf-core workflows have extensive documentation covering installation, usage, and description of output files to ensure that you won’t be left in the dark.
+
+- **Stable Releases**
+    - nf-core workflows use GitHub releases to tag stable versions of the code and software, making workflow runs totally reproducible.
+
+- **Packaged software**
+    - Pipeline dependencies are automatically downloaded and handled using Docker, Singularity, Conda, or other software management tools. There is no need for any software installations.
+
+- **Portable and reproducible**
+    - nf-core workflows follow best practices to ensure maximum portability and reproducibility. The large community makes the workflows exceptionally well-tested and easy to execute.
+
+- **Cloud-ready**
+    - nf-core workflows are tested on AWS
+
+## **5.1 Nf-core tools**
+`nf-core-tools` is a python package with helper tools for the nf-core community.
+
+These helper tools can be used for both building and running nf-core workflows.
+
+Today we will be focusing on the helper tools to build a workflow using nf-core templates and structures.
+
+Take a look at what is within with `nf-core-tools` suite
+
+```default
+nf-core -h
+```
+
+::: callout-tip
+
+:::
+
+
+## **5.2 Nf-core Pipeline**
+Let's review the structure of the [nf-core/rnaseq](https://github.com/nf-core/rnaseq) pipeline.
+
+
+### **5.2.1 nf-core create**
+
+The `create` subcommand makes a new pipeline using the nf-core base template. With a given pipeline name, description and author, it makes a starter pipeline which follows nf-core best practices.
+
+
+After creating the files, the command initialises the folder as a git repository and makes an initial commit. This first “vanilla” commit which is identical to the output from the templating tool is important, as it allows us to keep your pipeline in sync with the base template in the future. See the [nf-core syncing docs](https://nf-co.re/developers/sync) for more information.
+
+
+
+Let's set up the nf-core template for today's workshop:
+
+```default
+nf-core create
+```
+
+As we progress through the interactive prompts, we will use the following values below:
+![](./media/5.2.1_nf_core_create_interactive.png)
+
+**Remember to swap out the `Author` name with your own!**
+
+The creates a pipeline  called `myrnaseq` in the directory `pmcc-myrnaseq` (`<prefix>-<name>`) with `mmyeung` as the author. If selected exclude the following:
+
+- `github`: removed all files required for GitHub hosting of the pipeline. Specifically, the `.github` folder and `.gitignore` file.
+- `ci`: removes the GitHub continuous integration tests from the pipeline. Specifically, the `.github/workflows/` folder.
+- `github_badges`: removes GitHub badges from the `README.md` file.
+- `igenomes`: removes pipeline options related to iGenomes. Including the `conf/igenomes.config` file and all references to it.
+- `nf_core_configs`: excludes `nf_core/configs` repository options, which make multiple config profiles for various institutional clusters available.
+
+To run the pipeline creation silently (i.e. without any prompts) with the nf-core template, you can use the `--plain` option.
+
+::: callout-tip
+### Author name{.unlisted}
+Typically, we would use your github username as the value here, this allows an extra layer of traceability.
+:::
+
+::: callout-tip
+### Customised pipeline prefix{.unlisted}
+Remember we are currently only making the most of the nf-core templates and **not contributing** back to `nf-core`.
+As such, we should not use the `nf-core` prefix to our pipeline.
+:::
+
+::: callout-tip
+### Skipped templates{.unlisted}
+Note that the highlighted values under `Skip template areas?` are the sections that will be skipped.
+As this is a test pipeline we are ^skipping^ the set up of github CI and badges
+:::
+
+As we have requested `GitHub hosting`, on completion of the command, you will note there are suggested github commands included in the output. Use these commands to push the commits from your computer. You can then continue to edit, commit and push normally as you build your pipeline.
+
+![](./media/5.2.1_nf_core_create_github.png)
+
+
+#### **Alternative setups for `nf-core create`**
+Aside from the interactive setup we have just completed for `nf-core create`, there are two alternative methods.
+
+1. Provide the option using the optional flags from `nf-core create`
+
+2. Provide a `template.yaml` via the `--template-yaml` option
+
+::: callout-tip
+### **Challenge**{.unlisted}
+Create a second pipeline template using the optional flags with the `name` "myworkflow", provide a `description`, `author` name and set the `version` to "0.0.1"
+
+What options are still you still prompted for?
+:::
+
+::: callout-tip
+### **Advanced Challange**
+Create another pipeline template using a `template.yaml`
+
+^Hint: the key values in the yaml should be  `name`, `description`, `author`, `prefix` and `skip`^
+
+Set the pipeline to skip `ci`, `igenomes` and `nf_core_configs`
+:::
+
+## **5.3 Nf-core modules**
+[nf-core modules](https://github.com/nf-core/modules)
+
+asdcadsc 
+
+
+### **5.3.1 Installing nf-core modules**
+
+
+### **5.3.2 Updating nf-core modules**
+
+
+### **5.3.3 Removing nf-core modules**
+
+
+### **5.3.4 Writing modules with nf-core template**
+
+
+## **5.4 Nf-core subworkflow**
+[nf-core subworkflows](https://github.com/nf-core/modules)
+
+### **5.4.1 Installing nf-core subworkflows**
+
+
+**Subworkflows can be updated/removed like modules**
+
+### **5.4.2 Writing subworkflows with nf-core template**
+
+
+## **5.5 Nf-core schema and input validation**
+```default
+nf-core schema build
+```
+
+`nextflow_schmea.json` is for pipeline parameters
+
+
+
+
+Relies on `plugins` written by nf-core community
+
+In particular [`nf-validation`](https://github.com/nextflow-io/nf-validation)
+
+
+Recommend writing in web browser
+
+
+json format details [additional reading] (https://json-schema.org/understanding-json-schema)
+
+### **5.5.2 Nf-core inputs**
+nested in this schema is the `input` or samplesheet schema. unfortunately there isn't a nice interface to help you write this schema yet. However there are a number of minimal details to include:
+
+
+meta
+
+required
+
+dependency
+
+
+## **Contributing to nf-core**
+Full pipelines
+Please see the [nf-core documentation](https://nf-co.re/docs/tutorials/adding_a_pipeline/overview) for a full walkthrough of how to create a new nf-core workflow.
+---
+^*This workshop is adapted from [Fundamentals Training](https://training.nextflow.io/basic_training/), [Advanced Training](https://training.nextflow.io/advanced/), [Developer Tutorials](https://nf-co.re/docs/contributing/tutorials/creating_with_nf_core#creating-a-pipeline), [Nextflow Patterns](https://nextflow-io.github.io/patterns/) materials from Nextflow, nf-core [nf-core tools documentation](https://nf-co.re/docs/nf-core-tools) and [nf-validation](https://nextflow-io.github.io/nf-validation/)*^
