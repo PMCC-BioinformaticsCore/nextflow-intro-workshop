@@ -838,6 +838,10 @@ nf-core subworkflows list remote
 
 
 ## **5.5 Nf-core schema and input validation**
+Relies on `plugins` written by nf-core community
+
+In particular [`nf-validation`](https://github.com/nextflow-io/nf-validation)
+
 `nextflow_schmea.json` is for pipeline parameters
 
 
@@ -867,22 +871,17 @@ INFO     Waiting for form to be completed in the browser. Remember to click Fini
 
 
 
-
-
-
-
-Relies on `plugins` written by nf-core community
-
-In particular [`nf-validation`](https://github.com/nextflow-io/nf-validation)
-
-
 Recommend writing in web browser
 
 
 json format details [additional reading](https://json-schema.org/understanding-json-schema)
 
 ### **5.5.2 Nf-core inputs**
-nested in this schema is the `input` or samplesheet schema. unfortunately there isn't a nice interface to help you write this schema yet. However there are a number of minimal details to include:
+
+
+nested in this schema is the `input` or samplesheet schema. unfortunately there isn't a nice interface to help you write this schema yet.
+
+
 
 
 meta
