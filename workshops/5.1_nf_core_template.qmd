@@ -10,8 +10,10 @@ from: markdown+emoji
 ::: callout-tip
 
 ### Objectives{.unlisted}
-
-
+- Develop a basic Nextflow workflow with nf-core templates
+- Test and set up profiles for a Nextflow workflow
+- Create conditional processes, and conditional scripts within a processs
+- Read data of different types into a Nextflow workflow
 :::
 
 ## **Environment Setup**
@@ -83,7 +85,7 @@ nf-core is published in Nature Biotechnology: [Nat Biotechnol 38, 276–278 (202
 
 These helper tools can be used for both building and running nf-core workflows.
 
-Today we will be focusing on the helper tools to build a workflow using nf-core templates and structures.
+Today we will be focusing on the developer commands to build a workflow using nf-core templates and structures.
 
 Take a look at what is within with `nf-core-tools` suite
 
@@ -91,23 +93,74 @@ Take a look at what is within with `nf-core-tools` suite
 nf-core -h
 ```
 
-::: callout-tip
+```
+                                          ,--./,-.
+          ___     __   __   __   ___     /,-._.--~\
+    |\ | |__  __ /  ` /  \ |__) |__         }  {
+    | \| |       \__, \__/ |  \ |___     \`-._,-`-,
+                                          `._,._,'
 
-:::
+    nf-core/tools version 2.14.1 - https://nf-co.re
 
+
+                                                                                                    
+ Usage: nf-core [OPTIONS] COMMAND [ARGS]...                                                         
+                                                                                                    
+ nf-core/tools provides a set of helper tools for use with nf-core Nextflow pipelines.              
+ It is designed for both end-users running pipelines and also developers creating new pipelines.    
+                                                                                                    
+╭─ Options ────────────────────────────────────────────────────────────────────────────────────────╮
+│ --version                        Show the version and exit.                                      │
+│ --verbose        -v              Print verbose output to the console.                            │
+│ --hide-progress                  Don't show progress bars.                                       │
+│ --log-file       -l  <filename>  Save a verbose log to a file.                                   │
+│ --help           -h              Show this message and exit.                                     │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─ Commands for users ─────────────────────────────────────────────────────────────────────────────╮
+│ list                  List available nf-core pipelines with local info.                          │
+│ launch                Launch a pipeline using a web GUI or command line prompts.                 │
+│ create-params-file    Build a parameter file for a pipeline.                                     │
+│ download              Download a pipeline, nf-core/configs and pipeline singularity images.      │
+│ licences              List software licences for a given workflow (DSL1 only).                   │
+│ tui                   Open Textual TUI.                                                          │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─ Commands for developers ────────────────────────────────────────────────────────────────────────╮
+│ create            Create a new pipeline using the nf-core template.                              │
+│ lint              Check pipeline code against nf-core guidelines.                                │
+│ modules           Commands to manage Nextflow DSL2 modules (tool wrappers).                      │
+│ subworkflows      Commands to manage Nextflow DSL2 subworkflows (tool wrappers).                 │
+│ schema            Suite of tools for developers to manage pipeline schema.                       │
+│ create-logo       Generate a logo with the nf-core logo template.                                │
+│ bump-version      Update nf-core pipeline version number.                                        │
+│ sync              Sync a pipeline TEMPLATE branch with the nf-core template.                     │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
+```
 
 ## **5.2 Nf-core Pipeline**
 Let's review the structure of the [nf-core/rnaseq](https://github.com/nf-core/rnaseq) pipeline.
 
+Almost all of the structure provided here is from the nf-core templates.
+As we briefly covered last week in [Developing Modularised Workflows](./4.1_modules.html), it is good practice to separate your workflow from subworkflows and modules. As this allows you to modularise your workflows and reuse modules.
+
+Nf-core assists in enforcing this structure with the subfolders:
+
+- `workflows` - contains the main workflow
+- `subworkflows` - contains subworkflows either as written by the nf-core community or self-written
+- `modules` - contains modules either as written by the nf-core community or self-written
+
+In our **Introduction to Nextflow and running nf-core workflows** workshop in [Customising & running nf-core pipelines](./2.1_customise_and_run.html), we briefly touched on configuration files in the `conf/` folder and `nextflow.config`.
+
+Today we will be working on files in these locations and expanding our use of the nf-core template to include:
+
+- files in the `assets` folder
+- `nextflow_schema.json`
+- 
 
 ### **5.2.1 nf-core create**
 
 The `create` subcommand makes a new pipeline using the nf-core base template. With a given pipeline name, description and author, it makes a starter pipeline which follows nf-core best practices.
 
-
 After creating the files, the command initialises the folder as a git repository and makes an initial commit. This first “vanilla” commit which is identical to the output from the templating tool is important, as it allows us to keep your pipeline in sync with the base template in the future. See the [nf-core syncing docs](https://nf-co.re/developers/sync) for more information.
-
-
 
 Let's set up the nf-core template for today's workshop:
 
@@ -131,20 +184,20 @@ The creates a pipeline  called `myrnaseq` in the directory `pmcc-myrnaseq` (`<pr
 To run the pipeline creation silently (i.e. without any prompts) with the nf-core template, you can use the `--plain` option.
 
 ::: callout-tip
-### Author name{.unlisted}
+### **Author name**{.unlisted}
 Typically, we would use your github username as the value here, this allows an extra layer of traceability.
 :::
 
 ::: callout-tip
-### Customised pipeline prefix{.unlisted}
+### **Customised pipeline prefix**{.unlisted}
 Remember we are currently only making the most of the nf-core templates and **not contributing** back to `nf-core`.
 As such, we should not use the `nf-core` prefix to our pipeline.
 :::
 
 ::: callout-tip
-### Skipped templates{.unlisted}
+### **Skipped templates**{.unlisted}
 Note that the highlighted values under `Skip template areas?` are the sections that will be skipped.
-As this is a test pipeline we are ^skipping^ the set up of github CI and badges
+As this is a test pipeline we are **skipping** the set up of github CI and badges
 :::
 
 As we have requested `GitHub hosting`, on completion of the command, you will note there are suggested github commands included in the output. Use these commands to push the commits from your computer. You can then continue to edit, commit and push normally as you build your pipeline.
@@ -152,11 +205,36 @@ As we have requested `GitHub hosting`, on completion of the command, you will no
 ![](./media/5.2.1_nf_core_create_github.png)
 
 
+### **nf-core template**
+Let's see what has been minimally provided by `nf-core create`
+
+```default
+ll pmcc-myrnaseq/
+```
+
+```
+total 47
+drwxrwxr-x 2 myeung myeung  4096 Jun 11 15:00 assets
+-rw-rw-r-- 1 myeung myeung   372 Jun 11 15:00 CHANGELOG.md
+-rw-rw-r-- 1 myeung myeung  2729 Jun 11 15:00 CITATIONS.md
+drwxrwxr-x 2 myeung myeung  4096 Jun 11 15:00 conf
+drwxrwxr-x 3 myeung myeung  4096 Jun 11 15:00 docs
+-rw-rw-r-- 1 myeung myeung  1060 Jun 11 15:00 LICENSE
+-rw-rw-r-- 1 myeung myeung  3108 Jun 11 15:00 main.nf
+drwxrwxr-x 3 myeung myeung  4096 Jun 11 15:00 modules
+-rw-rw-r-- 1 myeung myeung  1561 Jun 11 15:00 modules.json
+-rw-rw-r-- 1 myeung myeung  9982 Jun 11 15:00 nextflow.config
+-rw-rw-r-- 1 myeung myeung 16657 Jun 11 15:00 nextflow_schema.json
+-rw-rw-r-- 1 myeung myeung  3843 Jun 11 15:00 README.md
+drwxrwxr-x 4 myeung myeung  4096 Jun 11 15:00 subworkflows
+-rw-rw-r-- 1 myeung myeung   165 Jun 11 15:00 tower.yml
+drwxrwxr-x 2 myeung myeung  4096 Jun 11 15:00 workflows
+```
+
 #### **Alternative setups for `nf-core create`**
 Aside from the interactive setup we have just completed for `nf-core create`, there are two alternative methods.
 
 1. Provide the option using the optional flags from `nf-core create`
-
 2. Provide a `template.yaml` via the `--template-yaml` option
 
 ::: callout-tip
@@ -166,32 +244,112 @@ Create a second pipeline template using the optional flags with the `name` "mywo
 What options are still you still prompted for?
 :::
 
+::: {.callout-caution collapse="true"}
+### Solution
+
+Run the following: 
+```default
+nf-core create --name myworkflow --description "my workflow test" --author "@mmyeung" --version "0.0.1"
+```
+
+Note that you are still prompted for any additional customisations and steps to skip
+
+:::
+
 ::: callout-tip
 ### **Advanced Challange**
-Create another pipeline template using a `template.yaml`
+Create another pipeline template using a yaml file called `mytemplate.yaml`
 
-^Hint: the key values in the yaml should be  `name`, `description`, `author`, `prefix` and `skip`^
+*Hint: the key values in the yaml should be `name`, `description`, `author`, `prefix` and `skip`*
 
 Set the pipeline to skip `ci`, `igenomes` and `nf_core_configs`
 :::
 
+::: {.callout-caution collapse="true"}
+### Solution
+
+Run the following: 
+```default
+vim mytemplate.yaml
+```
+Values in `mytemplate.yaml`
+```default
+name: coolpipe
+description: A cool pipeline
+author: me
+prefix: myorg
+skip:
+  - ci
+  - igenomes
+  - nf_core_configs
+```
+
+```default
+nf-core create --template-yaml mytemplate.yaml
+```
+:::
+
+## **5.3 Test Profile**
+nf-core tries to enforce software engineering concepts such as minimal test sets, by presetting up the `conf/test.config` and `conf/test_full.config`
+
 ## **5.3 Nf-core modules**
-[nf-core modules](https://github.com/nf-core/modules)
+You can find all the nf-core modules that have been accepted and peer-tested by the community in [nf-core modules](https://nf-co.re/modules).
 
-asdcadsc 
+or with
 
+```default
+nf-core modules list
+```
 
 ### **5.3.1 Installing nf-core modules**
+
+```default
+nf-core modules install <tool>/<subcommand>
+```
+
+install the nf-core modules
+
+- trimgalore
+- fastqc
+- multiqc
+- salmon
+
+
+following the installation what files changed, check with
+```default
+git status
+```
+
+`modules.json` is a running record of the modules installed and should be included in your pipeline.
+Note: you can find the github SHA for the exact "version" of the module installed.
+
+this insulates your pipeline from when a module is deleted.
+
+Ad. challenge: How would you look up previous versions of the module?
+
 
 
 ### **5.3.2 Updating nf-core modules**
 
+We got and error message for fastqc and multiqc because they were already installed
+
+```default
+nf-core modules update fastqc
+```
 
 ### **5.3.3 Removing nf-core modules**
 
+```default
+nf-core modules remove
+```
 
 ### **5.3.4 Writing modules with nf-core template**
 
+```default
+nf-core modules create 
+```
+
+Similar to `nf-core create` you can minimise a the number of prompts by using optional flags
 
 ## **5.4 Nf-core subworkflow**
 [nf-core subworkflows](https://github.com/nf-core/modules)
