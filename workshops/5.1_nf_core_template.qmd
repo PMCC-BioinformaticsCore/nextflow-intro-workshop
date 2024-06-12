@@ -1001,7 +1001,7 @@ json format details [additional reading](https://json-schema.org/understanding-j
 ### **Challenge**{.unlisted}
 We are going add the input parameter for the `transcript.fa`
 
-Then install `salmon/index` and write up `quant_wf` subworkflow from last week.
+Then install `salmon/index` and write up `quant_wf` subworkflow from last week.git 
 :::
 
 ### **5.5.2 Nf-core inputs**
