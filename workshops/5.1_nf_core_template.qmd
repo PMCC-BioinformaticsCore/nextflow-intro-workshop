@@ -357,16 +357,23 @@ For the duration of this workshop we are going to use the data from `nf-training
 We are also going to update our `test.config` to contain the `igenomes_base` parameter, as we have a local cache on the cluster.
 
 ```default
-## CLUSTER
-input = /scratch/users/${USER}/training/nf-training/data/
-genome = GRCh38
-igenomes_base = /data/janis/nextflow/
-outdir = /scratch/users/${USER}/myrnaseqtest
+input = "/home/Shared/For_NF_Workshop/training/nf-training/data/ggal/samplesheet.csv"
+outdir = "/scratch/users/${USER}/myrnaseqtest"
+
+// genome references
+genome = "GRCh38"
+igenomes_base = "/data/janis/nextflow/references/genomes/ngi-igenomes"
 ```
 
-Let's quickly check that our pipeline runs with the test profile
+Also, we will need to change the value, `custom_config_base` to `null`, in `nextflow.config`
 ```default
-nextflow run pmcc-myrnaseq -profile test,singularity
+custom_config_base         = null
+```
+
+Let's quickly check that our pipeline runs with the test profile.
+```default
+cd ..
+nextflow run ./pmcc-myrnaseq -profile test,singularity
 ```
 
 ::: callout-tip
@@ -411,6 +418,15 @@ INFO     Modules installed in '.':
 │ multiqc     │ nf-core/modules │ b7ebe95     │ Update MQC container (#5006)         │ 2024-02-29 │
 └─────────────┴─────────────────┴─────────────┴──────────────────────────────────────┴────────────┘
 ```
+
+::: callout-tip
+### **Overall Challenge**{.unlisted}
+We are going to replicate sections of the workflow from last week.
+
+FASTQC -> Trimgalore -> FASTQC -> MULTIQC
+
+:::
+
 
 ### **5.3.1 Installing nf-core modules**
 The general format for installing modules is as below.
@@ -705,6 +721,21 @@ Now remove the `samtools/sort` module
 nf-core modules remove samtools/sort
 ```
 
+::: callout-tip
+### **Overall Challenge**{.unlisted}
+
+Now add the `include` module statements to the our `workflows/myrnaseq.nf`
+:::
+
+::: {.callout-caution collapse="true"}
+```default
+include { FASTQC as FASTQC_one } from '../modules/nf-core/fastq/main' 
+include { FASTQC as FASTQC_two } from '../modules/nf-core/fastq/main' 
+
+include { TRIMGALORE } from '../modules/nf-core/trimgalore/main'
+```
+:::
+
 
 ### **5.3.4 Writing modules with nf-core template**
 For this section we are going to refer to the [nf-core guidelines for modules](https://nf-co.re/docs/guidelines/components/modules).
@@ -792,7 +823,7 @@ within the module `.nf` script you will note that the definitions for the `conda
 nf-core has a large cache of containers [here](https://depot.galaxyproject.org/singularity). Though you can also provide a simple path to docker hub.
 
 ```default
-    container "mmyeung/customunix:" ### CLUSTER
+    container "mmyeung/trccustomunix:0.0.1"
 ```
 :::
 
@@ -811,17 +842,94 @@ Are there optional flags that take file inputs?
 What options need to set to ensure that the command runs without error?
 :::
 
+
+::: {.callout-caution collapse="true"}
+```default
+process SAMTOOLS_VIEW {
+    tag "$meta.id"
+    label 'process_low'
+
+    conda "${moduleDir}/environment.yml"
+    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+        'https://depot.galaxyproject.org/singularity/samtools:1.20--h50ea8bc_0' :
+        'biocontainers/samtools:1.20--h50ea8bc_0' }"
+
+    input:
+    tuple val(meta), path(input), path(index)
+    tuple val(meta2), path(fasta)
+    path bed
+    path qname
+
+    output:
+    tuple val(meta), path("*.bam"),  emit: bam
+    path  "versions.yml",            emit: versions
+
+    when:
+    task.ext.when == null || task.ext.when
+
+    script:
+    def args = task.ext.args ?: ''
+    def args2 = task.ext.args2 ?: ''
+    def prefix = task.ext.prefix ?: "${meta.id}"
+    def reference = fasta ? "--reference ${fasta}" : ""
+    def readnames = qname ? "--qname-file ${qname}": ""
+    def regions = bed ? "-L ${bed}": ""
+    if ("$input" == "${prefix}.${file_type}") error "Input and output names are the same, use \"task.ext.prefix\" to disambiguate!"
+    """
+    samtools \\
+        view \\
+        -hb \\
+        --threads ${task.cpus-1} \\
+        ${reference} \\
+        ${readnames} \\
+        ${regions} \\
+        $args \\
+        -o ${prefix}.bam \\
+        $input \\
+        $args2
+
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        samtools: \$(echo \$(samtools --version 2>&1) | sed 's/^.*samtools //; s/Using.*\$//')
+    END_VERSIONS
+    """
+
+    stub:
+    def args = task.ext.args ?: ''
+    def prefix = task.ext.prefix ?: "${meta.id}"
+    def file_type = args.contains("--output-fmt sam") ? "sam" :
+                    args.contains("--output-fmt bam") ? "bam" :
+                    args.contains("--output-fmt cram") ? "cram" :
+                    input.getExtension()
+    if ("$input" == "${prefix}.${file_type}") error "Input and output names are the same, use \"task.ext.prefix\" to disambiguate!"
+
+    def index = args.contains("--write-index") ? "touch ${prefix}.csi" : ""
+
+    """
+    touch ${prefix}.${file_type}
+    ${index}
+
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        samtools: \$(echo \$(samtools --version 2>&1) | sed 's/^.*samtools //; s/Using.*\$//')
+    END_VERSIONS
+    """
+```
+
+:::
 Similar to `nf-core create` you can minimise a the number of prompts by using optional flags.
 
 
 ::: callout-tip
-### **Challenge**{.unlisted}
-Write up the workflow 
+### **Overall Challenge**{.unlisted}
+Write up the short workflow as discussed above
+
+FASTQC -> trimgalore -> FASTQC -> MULTIQC
 :::
 
 
 ## **5.4 Nf-core subworkflow**
-[nf-core subworkflows](https://github.com/nf-core/modules)
+[nf-core subworkflows](https://nf-co.re/subworkflows)
 
 or with
 
@@ -831,11 +939,26 @@ nf-core subworkflows list remote
 
 ### **5.4.1 Installing nf-core subworkflows**
 
-
 **Subworkflows can be updated/removed like modules**
+
+::: callout-tip
+### **Challenge**{.unlisted}
+Install the subworkflow `fastq_subsample_fq_salmon` into the workflow
+:::
+
+
+::: {.callout-caution collapse="true"}
+```default
+nf-core subworkflows install fastq_subsample_fq_salmon
+```
+:::
 
 ### **5.4.2 Writing subworkflows with nf-core template**
 
+::: callout-tip
+### **Challenge**{.unlisted}
+Write up the `QC_WF` subworkflow from last week.
+:::
 
 ## **5.5 Nf-core schema and input validation**
 Relies on `plugins` written by nf-core community
@@ -843,7 +966,6 @@ Relies on `plugins` written by nf-core community
 In particular [`nf-validation`](https://github.com/nextflow-io/nf-validation)
 
 `nextflow_schmea.json` is for pipeline parameters
-
 
 ```default
 nf-core schema build
@@ -869,26 +991,40 @@ INFO     Waiting for form to be completed in the browser. Remember to click Fini
 ⢿ Use ctrl+c to stop waiting and force exit.
 ```
 
-
-
 Recommend writing in web browser
 
 
 json format details [additional reading](https://json-schema.org/understanding-json-schema)
 
+
+::: callout-tip
+### **Challenge**{.unlisted}
+We are going add the input parameter for the `transcript.fa`
+
+Then install `salmon/index` and write up `quant_wf` subworkflow from last week.
+:::
+
 ### **5.5.2 Nf-core inputs**
-
-
 nested in this schema is the `input` or samplesheet schema. unfortunately there isn't a nice interface to help you write this schema yet.
 
+- meta: Allows you to predesignate the "key" with in the "meta"
+
+- required: value must be included
+
+- dependency: value is dependant on other value existing in samplesheet (i.e. fastq_2 must imply there is a fastq_1)
+
+
+### **5.6 Nf-core tools for launching**
+
+`create-params-file`
+
+
+### **5.7 Nf-core for pipeline management**
+
+`bump-version` ==> good software management to note down versions
 
 
 
-meta
-
-required
-
-dependency
 
 
 ## **Contributing to nf-core**
