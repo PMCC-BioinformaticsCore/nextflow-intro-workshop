@@ -31,6 +31,8 @@ website:
           href: workshops/3.1_creating_a_workflow.html
         - text: "Modularisation"
           href: workshops/4.1_modules.html
+        - text: "Nf-core Template"
+          href: workshops/5.1_nf_core_template.html
 
 format:
   html:
