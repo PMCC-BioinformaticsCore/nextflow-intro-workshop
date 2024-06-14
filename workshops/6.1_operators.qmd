@@ -1,0 +1,541 @@
+---
+title: "**Nextflow Development - Channel Operators**"
+output:
+  html_document:
+    toc: false
+    toc_float: false
+from: markdown+emoji
+---
+
+::: callout-tip
+
+### Objectives{.unlisted}
+
+:::
+
+
+## **Environment Setup**
+
+Set up an interactive shell to run our Nextflow workflow: 
+
+``` default
+srun --pty -p prod_short --mem 8GB --mincpus 2 -t 0-2:00 bash
+```
+
+Load the required modules to run Nextflow:
+
+``` default
+module load nextflow/23.04.1
+module load singularity/3.7.3
+```
+
+Set the singularity cache environment variable:
+
+```default
+export NXF_SINGULARITY_CACHEDIR=/config/binaries/singularity/containers_devel/nextflow
+```
+
+Singularity images downloaded by workflow executions will now be stored in this directory.
+
+You may want to include these, or other environmental variables, in your `.bashrc` file (or alternate) that is loaded when you log in so you don’t need to export variables every session. A complete list of environment variables can be found [here](https://www.nextflow.io/docs/latest/config.html#environment-variables).
+
+
+## **6.0. Create Input Channels **
+
+```default
+#!/usr/bin/env nextflow
+
+params.reads = "/scratch/users/.../nf-training/data/ggal/*_{1,2}.fq"
+params.transcriptome_file = "/scratch/users/.../nf-training/ggal/transcriptome.fa"
+params.multiqc = "/scratch/users/.../nf-training/multiqc"
+
+reads_ch = Channel.fromFilePairs("$params.reads")
+
+process INDEX {
+    container "/config/binaries/singularity/containers_devel/nextflow/depot.galaxyproject.org-singularity-salmon-1.10.1--h7e5ed60_0.img"
+
+    input:
+    path transcriptome
+
+    output:
+    path "salmon_idx"
+
+    script:
+    """
+    salmon index --threads $task.cpus -t $transcriptome -i salmon_idx
+    """
+}
+
+process QUANTIFICATION {
+    container "/config/binaries/singularity/containers_devel/nextflow/depot.galaxyproject.org-singularity-salmon-1.10.1--h7e5ed60_0.img"
+
+    input:
+    path salmon_index
+    tuple val(sample_id), path(reads)
+
+    output:
+    path "$sample_id"
+
+    script:
+    """
+    salmon quant --threads $task.cpus --libType=U \
+    -i $salmon_index -1 ${reads[0]} -2 ${reads[1]} -o $sample_id
+    """
+}
+
+process FASTQC {
+    container "/config/binaries/singularity/containers_devel/nextflow/depot.galaxyproject.org-singularity-fastqc-0.12.1--hdfd78af_0.img"
+
+    input:
+    tuple val(sample_id), path(reads)
+
+    output:
+    path "fastqc_${sample_id}_logs"
+
+    script:
+    """
+    mkdir fastqc_${sample_id}_logs
+    fastqc -o fastqc_${sample_id}_logs -f fastq -q ${reads}
+    """
+}
+
+process MULTIQC {
+    publishDir params.outdir, mode:'copy'
+    container "/config/binaries/singularity/containers_devel/nextflow/depot.galaxyproject.org-singularity-multiqc-1.21--pyhdfd78af_0.img"
+
+    input:
+    path quantification
+    path fastqc
+
+    output:
+    path "*.html"
+
+    script:
+    """
+    multiqc . --filename $quantification
+    """
+}
+
+workflow {
+  index_ch = INDEX(params.transcriptome_file)
+  quant_ch = QUANTIFICATION(index_ch, reads_ch)
+  quant_ch.view()
+
+  fastqc_ch = FASTQC(reads_ch)
+  multiqc_ch = MULTIQC(quant_ch, fastqc_ch)
+}
+```
+
+## **6.0. join **
+
+Returns: queue channel
+
+The join operator emits the inner product of two source channels using a matching key.
+
+To be more precise, the operator transforms a sequence of tuples like (K, V1, V2, ..) and (K, W1, W1, ..) into a sequence of tuples like (K, V1, V2, .., W1, W2, ..). It is equivalent to an inner join in SQL, or an outer join when remainder is true.
+
+For example:
+
+left  = Channel.of( ['X', 1], ['Y', 2], ['Z', 3], ['P', 7] )
+right = Channel.of( ['Z', 6], ['Y', 5], ['X', 4] )
+
+left.join(right).view()
+[Z, 3, 6]
+[Y, 2, 5]
+[X, 1, 4]
+
+
+
+create separate transcriptome.fa for each read type
+
+```default
+cp "/scratch/users/.../nf-training/ggal/transcriptome.fa" "/scratch/users/.../nf-training/ggal/lung.transcriptome.fa"
+
+cp "/scratch/users/.../nf-training/ggal/transcriptome.fa" "/scratch/users/.../nf-training/ggal/liver.transcriptome.fa"
+
+mv "/scratch/users/.../nf-training/ggal/transcriptome.fa" "/scratch/users/.../nf-training/ggal/gut.transcriptome.fa"
+
+```
+
+```default
+
+params.transcriptome_file = "/scratch/users/.../nf-training/ggal/transcriptome*.fa"
+
+transcriptome_ch = Channel.fromPath("$params.transcriptome_file")
+    .map { fasta -> 
+        meta = fasta.simpleName
+        [meta, fasta]
+    }
+
+transcriptome_ch.view()
+
+```
+
+now that reads_ch tuple and transcriptome_ch tuple have same matching grouping key, they can be joined
+
+
+```default
+
+joined_ch = reads_ch.join(transcriptome_ch)
+joined_ch.view()
+
+```
+
+Process has to be modified to accept new tuple structure
+
+```default
+process INDEX {
+    container "/config/binaries/singularity/containers_devel/nextflow/depot.galaxyproject.org-singularity-salmon-1.10.1--h7e5ed60_0.img"
+
+    input:
+    tuple val(meta), path(transcriptome)
+
+    output:
+    path "salmon_idx"
+
+    script:
+    """
+    salmon index --threads $task.cpus -t $transcriptome -i salmon_idx
+    """
+}
+
+
+process QUANTIFICATION {
+    container "/config/binaries/singularity/containers_devel/nextflow/depot.galaxyproject.org-singularity-salmon-1.10.1--h7e5ed60_0.img"
+
+    input:
+    tuple val(sample_id), path(reads), path(salmon_index)
+
+    output:
+    path "$sample_id"
+
+    script:
+    """
+    salmon quant --threads $task.cpus --libType=U \
+    -i $salmon_index -1 ${reads[0]} -2 ${reads[1]} -o $sample_id
+    """
+}
+
+```
+
+in workflow block:
+
+```default
+workflow {
+  index_ch = INDEX(transcriptome_ch)
+
+  inputs_ch = reads_ch.join(index_ch)
+
+  quant_ch = QUANTIFICATION(inputs_ch)
+  quant_ch.view()
+
+  fastqc_ch = FASTQC(reads_ch)
+  multiqc_ch = MULTIQC(quant_ch, fastqc_ch)
+}
+
+```
+
+USE JOIN OR COMBINE, NOT BOTH
+
+## **6.0. combine **
+
+Returns: queue channel
+
+The combine operator produces the combinations (i.e. cross product, “Cartesian” product) of two source channels, or a channel and a list (as the right operand), emitting each combination separately.
+
+For example:
+
+numbers = Channel.of(1, 2, 3)
+words = Channel.of('hello', 'ciao')
+
+numbers
+    .combine(words)
+    .view()
+[1, hello]
+[2, hello]
+[3, hello]
+[1, ciao]
+[2, ciao]
+[3, ciao]
+The by option can be used to combine items that share a matching key. The value should be the zero-based index of the tuple, or a list of indices. For example:
+
+source = Channel.of( [1, 'alpha'], [2, 'beta'] )
+target = Channel.of( [1, 'x'], [1, 'y'], [1, 'z'], [2, 'p'], [2, 'q'], [2, 't'] )
+
+source.combine(target, by: 0).view()
+[1, alpha, x]
+[1, alpha, y]
+[1, alpha, z]
+[2, beta, p]
+[2, beta, q]
+[2, beta, t]
+Note
+
+The combine operator is similar to cross and join, making them easy to confuse. Their differences can be summarized as follows:
+
+combine and cross both produce an outer product or cross product, whereas join produces an inner product.
+combine filters pairs with a matching key only if the by option is used, whereas cross always filters pairs with a matching key.
+combine with the by option merges and flattens each pair, whereas cross does not. Compare the examples for combine and cross to see this difference.
+
+
+## **6.0. collect **
+
+Returns: value channel
+
+The collect operator collects all items from a source channel into a list and emits it as a single item:
+
+Channel.of( 1, 2, 3, 4 )
+    .collect()
+    .view()
+[1, 2, 3, 4]
+An optional closure can be used to transform each item before it is collected:
+
+Channel.of( 'hello', 'ciao', 'bonjour' )
+    .collect { it.length() }
+    .view()
+[5, 4, 7]
+Available options:
+
+flat
+When true, nested list structures are flattened and their items are collected individually (default: true).
+sort
+When true, the collected items are sorted by their natural ordering (default: false). Can also be a closure or a Comparator which defines how items are compared during sorting.
+
+
+
+
+THINK OF EXAMPLE HERE
+
+
+## **6.0. groupTuple **
+
+Returns: queue channel
+
+The groupTuple operator collects lists (i.e. tuples) from a source channel into groups based on a grouping key. A new tuple is emitted for each distinct key.
+
+To be more precise, the operator transforms a sequence of tuples like (K, V, W, ..) into a sequence of tuples like (K, list(V), list(W), ..).
+
+For example:
+
+Channel.of( [1, 'A'], [1, 'B'], [2, 'C'], [3, 'B'], [1, 'C'], [2, 'A'], [3, 'D'] )
+    .groupTuple()
+    .view()
+[1, [A, B, C]]
+[2, [C, A]]
+[3, [B, D]]
+By default, the first element of each tuple is used as the grouping key. The by option can be used to specify a different index, or list of indices. For example, to group by the second element of each tuple:
+
+Channel.of( [1, 'A'], [1, 'B'], [2, 'C'], [3, 'B'], [1, 'C'], [2, 'A'], [3, 'D'] )
+    .groupTuple(by: 1)
+    .view()
+[[1, 2], A]
+[[1, 3], B]
+[[2, 1], C]
+[[3], D]
+By default, if you don’t specify a size, the groupTuple operator will not emit any groups until all inputs have been received. If possible, you should always try to specify the number of expected elements in each group using the size option, so that each group can be emitted as soon as it’s ready. In cases where the size of each group varies based on the grouping key, you can use the built-in groupKey() function, which allows you to define a different expected size for each group:
+
+chr_frequency = ["chr1": 2, "chr2": 3]
+
+Channel.of(
+        ['region1', 'chr1', '/path/to/region1_chr1.vcf'],
+        ['region2', 'chr1', '/path/to/region2_chr1.vcf'],
+        ['region1', 'chr2', '/path/to/region1_chr2.vcf'],
+        ['region2', 'chr2', '/path/to/region2_chr2.vcf'],
+        ['region3', 'chr2', '/path/to/region3_chr2.vcf']
+    )
+    .map { region, chr, vcf -> tuple( groupKey(chr, chr_frequency[chr]), vcf ) }
+    .groupTuple()
+    .view()
+[chr1, [/path/to/region1_chr1.vcf, /path/to/region2_chr1.vcf]]
+[chr2, [/path/to/region1_chr2.vcf, /path/to/region2_chr2.vcf, /path/to/region3_chr2.vcf]]
+Available options:
+
+by
+The zero-based index of the element to use as the grouping key. Can also be a list of indices, e.g. by: [0,2] (default: [0]).
+remainder
+When true, incomplete tuples (i.e. groups with less than size items) are emitted as partial groups, otherwise they are discarded (default: false). This option can only be used with size.
+size
+The required number of items for each group. When a group reaches the required size, it is emitted.
+sort
+Defines the sorting criteria for the grouped items. Can be one of the following values:
+
+false: No sorting is applied (default).
+true: Order the grouped items by the item’s natural ordering i.e. numerical for number, lexicographic for string, etc. See the Java documentation for more information.
+'hash': Order the grouped items by the hash number associated to each entry.
+'deep': Similar to the previous, but the hash number is created on actual entries content e.g. when the item is a file, the hash is created on the actual file content.
+A custom sorting criteria used to order the nested list elements of each tuple. It can be a Closure or a Comparator object.
+
+
+copy same fastq data into lane 2 
+
+```default
+#!/usr/bin/env nextflow
+
+params.reads_lane2 = "/scratch/users/.../nf-training/data/ggal/*_{1,2}.fq"
+reads_lane2_ch = Channel.fromFilePairs("$params.reads_lane2")
+reads_lane2_ch.view()
+
+```
+
+has same grouping key. also assign trancrptome and input into process (create module)
+
+
+```default
+
+include {QUANTIFICATION as QUANTIFICATION1} from ../vcadihvidsv
+include {QUANTIFICATION as QUANTIFICATION2} from ../vcadihvidsv
+
+
+process MERGE_QUANTIFICATION {
+    input:
+    tuple val(meta), path(quant1), path(quant2)
+
+    output:
+    tuple val(meta), path("merged")
+
+    script:
+
+    """
+    mkdir merged
+    cp quant1/* \$merged
+    cp quant2/* \$merged
+
+    """
+
+}
+
+```
+
+workflow block: (still need to change downstream processes FASTQC + MULTIQC)
+
+```default
+workflow {
+  index_ch = INDEX(transcriptome_ch)
+
+  inputs_ch = reads_ch.join(index_ch)
+
+  reads_lane2_ch = Channel.fromFilePairs("$params.reads_lane2")
+  reads_lane2_ch.view()
+
+  inputs2_ch = reads_lane2_ch.join(index_ch)
+
+  quant_ch = QUANTIFICATION1(inputs_ch)
+  quant_ch.view()
+
+  quant2_ch = QUANTIFICATION2(inputs2_ch)
+  quant2_ch.view()
+
+  quant_joined = quant_ch.join(quant2_ch)
+  merged_quant_ch = MERGE_QUANTIFICATION(quant_joined)
+
+  fastqc_ch = FASTQC(reads_ch)
+  multiqc_ch = MULTIQC(quant_ch, fastqc_ch)
+}
+
+```
+
+
+
+
+## **6.0. branch **
+
+
+Returns: multiple queue channels or value channels, matching the source type
+
+The branch operator forwards each item from a source channel to one of multiple output channels, based on a selection criteria.
+
+The selection criteria is a closure that defines, for each output channel, a unique label followed by a boolean expression. When an item is received, it is routed to the first output channel whose expression evaluates to true. For example:
+
+Channel.of(1, 2, 3, 40, 50)
+    .branch {
+        small: it < 10
+        large: it > 10
+    }
+    .set { result }
+
+result.small.view { "$it is small" }
+result.large.view { "$it is large" }
+1 is small
+2 is small
+3 is small
+40 is large
+50 is large 
+
+The value emitted to each branch can be customized with an expression statement (or statements) after the branch condition:
+
+Channel.of(1, 2, 3, 40, 50)
+    .branch {
+        foo: it < 10
+            return it+2
+
+        bar: it < 50
+            return it-2
+
+        other: true
+            return 0
+    }
+    .set { result }
+
+result.foo.view { "$it is foo" }
+result.bar.view { "$it is bar" }
+result.other.view { "$it is other" }
+3 is foo
+4 is foo
+5 is foo
+38 is bar
+
+When the return keyword is omitted, the value of the last expression statement is implicitly returned.
+The branchCriteria() method can be used to create a branch criteria as a variable that can be passed as an argument to any number of branch operations, as shown below:
+
+def criteria = branchCriteria {
+    small: it < 10
+    large: it > 10
+}
+
+Channel.of(1, 2, 30).branch(criteria).set { ch1 }
+Channel.of(10, 20, 3).branch(criteria).set { ch2 }
+
+ch1.small.view { "$it is small" }
+ch1.large.view { "$it is large" }
+ch2.small.view { "$it is small" }
+ch2.large.view { "$it is large" }
+1 is small
+2 is small
+3 is small
+20 is large
+30 is large
+
+
+
+
+read in all inouts together, then separate by file type
+
+```default
+#!/usr/bin/env nextflow
+
+params.reads = "/scratch/users/.../nf-training/data/ggal/*_{1,2}.fq"
+reads_ch = Channel.fromFilePairs("$params.reads")
+reads_ch.view
+
+reads_ch.branch {meta, fastqs ->
+    single: fastqs.size() = 1
+        meta.paired = false
+        return [meta, fastqs]
+    multiple: fastqs.size() > 1
+        meta.paired = true
+        return [meta, fastqs]
+
+}
+
+reads_ch.single.view()
+reads_ch.paired.view()
+
+```
+
+Use paired reads for one process, different process for nonpaired....
+
+
+
+
+---
+^*This workshop is adapted from [Fundamentals Training](https://training.nextflow.io/basic_training/), [Advanced Training](https://training.nextflow.io/advanced/), [Developer Tutorials](https://nf-co.re/docs/contributing/tutorials/creating_with_nf_core#creating-a-pipeline), [Nextflow Patterns](https://nextflow-io.github.io/patterns/) materials from Nextflow, nf-core [nf-core tools documentation](https://nf-co.re/docs/nf-core-tools) and [nf-validation](https://nextflow-io.github.io/nf-validation/)*^
