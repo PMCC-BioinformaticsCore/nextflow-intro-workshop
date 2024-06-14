@@ -1,0 +1,184 @@
+---
+title: "**Nextflow Development - Scatter, Gather, and Outputs**"
+output:
+  html_document:
+    toc: false
+    toc_float: false
+from: markdown+emoji
+---
+
+## **8.1 Scatter**
+
+## 8.1.1 Process per file path
+
+Problem
+You need to execute a task for each file that matches a glob pattern.
+
+Solution
+Use the Channel.fromPath method to create a channel emitting all files matching the glob pattern. Then, use the channel as input of the process implementing your task.
+
+```default
+process foo {
+  debug true
+  input:
+  path x
+
+  script:
+  """
+  echo your_command --input $x
+  """
+}
+
+workflow {
+  foo("$baseDir/data/reads/*_1.fq.gz")
+}
+```
+
+Run it
+```default
+nextflow run nextflow-io/patterns/process-per-file-path.nf
+```
+
+
+## 8.1.2. Process per file chunk
+
+Problem
+You need to split one or more input files into chunks and execute a task for each of them.
+
+Solution
+Use the splitText operator to split a file into chunks of a given size. Then use the resulting channel as input for the process implementing your task.
+
+Chunks are kept in memory by default. When splitting big files, specify the parameter file: true to save the chunks into files. See the documentation for details.
+
+Splitter for specific file formats are available, e.g. splitFasta and splitFastq.
+
+```default
+params.infile = "$baseDir/data/poem.txt"
+params.size = 5
+
+process foo {
+  debug true
+  input: 
+  file x
+
+  script:
+  """
+  rev $x | rev
+  """
+}
+
+workflow {
+  Channel.fromPath(params.infile) \
+    | splitText(by: params.size) \
+    | foo
+}
+```
+
+Run it
+
+Use the the following command to execute the example:
+```default
+nextflow run nextflow-io/patterns/process-per-file-chunk.nf
+```
+
+## 8.1.3. Process per file range
+
+Problem
+You need to execute a task over two or more series of files having a common index range.
+
+Solution
+Use the from method to define the range over which to repeat the task execution, then chain it with the map operator to associate each index with the corresponding input files. Finally, use the resulting channel as input for the process.
+
+```default
+process foo {
+  debug true
+  tag "$sampleId"
+
+  input: 
+  tuple val(sampleId), file(indels), file(snps)
+
+  """
+  echo foo_command --this $indels --that $snps
+  """
+}
+
+workflow {
+  Channel.from(1..23) \
+    | map { chr -> ["sample${chr}", file("/some/path/foo.${chr}.indels.vcf"), file("/other/path/foo.snvs.${chr}.vcf")] } \
+    | foo
+}
+```
+
+```default
+nextflow run nextflow-io/patterns/process-per-file-range.nf
+```
+
+## 8.2. Gather
+
+## 8.3. Organise outputs
+
+## 8.3.1. Store process outputs
+
+## 8.3.2. Store outputs matching a glob pattern
+
+## 8.3.3. Store outputs renaming files
+
+Problem
+You need to save the outputs of a process to a directory, giving each file a name of your choice.
+
+Solution
+The publishDir allows you to save the process outputs in a directory of your choice.
+
+Use the saveAs option to give each file a name of your choice, providing a custom rule as a closure.
+
+```
+process foo {
+  publishDir 'results', saveAs: { filename -> "foo_$filename" }
+
+  output: 
+  path '*.txt'
+
+  '''
+  touch this.txt
+  touch that.txt
+  '''
+}
+
+workflow {
+  foo()
+}
+```
+
+Run it
+```default
+nextflow run nextflow-io/patterns/publish-rename-outputs.nf
+```
+
+## 8.3.4. Store outputs in a sub-directory
+
+The same pattern can be used to store specific files in separate directories depending on the actual name.
+
+```default
+process foo {
+  publishDir 'results', saveAs: { filename -> filename.endsWith(".zip") ? "zips/$filename" : filename }
+
+  output: 
+  path '*'
+
+  '''
+  touch this.txt
+  touch that.zip
+  '''
+}
+
+workflow {
+  foo()
+}
+```
+
+Relative paths are resolved against the publishDir store path. Use an absolute path to store files in a directory outside the publishDir store path.
+
+Run it: 
+```default
+nextflow run nextflow-io/patterns/publish-rename-outputs-subdirs.nf
+```
