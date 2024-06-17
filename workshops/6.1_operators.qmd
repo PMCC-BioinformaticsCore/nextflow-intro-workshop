@@ -40,17 +40,47 @@ Singularity images downloaded by workflow executions will now be stored in this 
 You may want to include these, or other environmental variables, in your `.bashrc` file (or alternate) that is loaded when you log in so you don’t need to export variables every session. A complete list of environment variables can be found [here](https://www.nextflow.io/docs/latest/config.html#environment-variables).
 
 
-## **6.0. Create Input Channels **
+## **6.1.1 Create Input Channels **
+
+Previously, we created three Nextflow files:
+
+```default
+├── rnaseq.nf
+├── modules.nf
+└── modules
+    └── trimgalore.nf
+```
+
+- `rnaseq.nf`: main workflow script where parameters are defined and processes were called. 
 
 ```default
 #!/usr/bin/env nextflow
 
-params.reads = "/scratch/users/.../nf-training/data/ggal/*_{1,2}.fq"
-params.transcriptome_file = "/scratch/users/.../nf-training/ggal/transcriptome.fa"
-params.multiqc = "/scratch/users/.../nf-training/multiqc"
+params.reads = "/scratch/users/.../training/nf-training/data/ggal/*_{1,2}.fq"
+params.transcriptome_file = "/scratch/users/.../training/nf-training/data/ggal/transcriptome.fa"
 
 reads_ch = Channel.fromFilePairs("$params.reads")
+reads_ch.view()
 
+include { INDEX } from './modules.nf'
+include { QUANTIFICATION as QT } from './modules.nf'
+include { FASTQC as FASTQC_one } from './modules.nf'
+include { FASTQC as FASTQC_two } from './modules.nf'
+include { MULTIQC } from './modules.nf'
+include { TRIMGALORE } from './modules/trimgalore.nf'
+
+workflow {
+  index_ch = INDEX(params.transcriptome_file)
+  quant_ch = QT(index_ch, reads_ch)
+  fastqc_ch = FASTQC_one(reads_ch)
+  trimgalore_out_ch = TRIMGALORE(reads_ch).reads
+  fastqc_cleaned_ch = FASTQC_two(trimgalore_out_ch)
+  multiqc_ch = MULTIQC(quant_ch, fastqc_ch)
+}
+```
+- `modules.nf`: script containing the majority of modules, including `INDEX`, `QUANTIFICATION`, `FASTQC`, and `MULTIQC`
+
+```default
 process INDEX {
     container "/config/binaries/singularity/containers_devel/nextflow/depot.galaxyproject.org-singularity-salmon-1.10.1--h7e5ed60_0.img"
 
@@ -115,27 +145,176 @@ process MULTIQC {
     multiqc . --filename $quantification
     """
 }
+```
+- `modules/trimgalore.nf`: script inside a `modules` folder, containing only the `TRIMGALORE` process
+```default
+process TRIMGALORE {
+  container '/config/binaries/singularity/containers_devel/nextflow/depot.galaxyproject.org-singularity-trim-galore-0.6.6--0.img' 
 
-workflow {
-  index_ch = INDEX(params.transcriptome_file)
-  quant_ch = QUANTIFICATION(index_ch, reads_ch)
-  quant_ch.view()
+  input:
+    tuple val(sample_id), path(reads)
+  
+  output:
+    tuple val(sample_id), path("*{3prime,5prime,trimmed,val}*.fq.gz"), emit: reads
+    tuple val(sample_id), path("*report.txt")                        , emit: log     , optional: true
+    tuple val(sample_id), path("*unpaired*.fq.gz")                   , emit: unpaired, optional: true
+    tuple val(sample_id), path("*.html")                             , emit: html    , optional: true
+    tuple val(sample_id), path("*.zip")                              , emit: zip     , optional: true
 
-  fastqc_ch = FASTQC(reads_ch)
-  multiqc_ch = MULTIQC(quant_ch, fastqc_ch)
+  script:
+    """
+    trim_galore \\
+      --paired \\
+      --gzip \\
+      ${reads[0]} \\
+      ${reads[1]}
+    """
 }
 ```
 
-## **6.0. join **
+In the workflow script `rnaseq.nf` we defined the `reads` parameter to be multiple paired `.fq` files, and the `transcriptome_file` parameter to be a single transcriptome file. A channel was created from the paired `.fq` files using the `fromFilePairs` channel factory, which created a tuple where the first element is a unique grouping key created based on similarities in file name, and the second element contains the list of paired files.
 
-Returns: queue channel
+```default
+#!/usr/bin/env nextflow
 
-The join operator emits the inner product of two source channels using a matching key.
+params.reads = "/scratch/users/.../nf-training/data/ggal/*_{1,2}.fq"
+params.transcriptome_file = "/scratch/users/.../nf-training/ggal/transcriptome.fa"
 
-To be more precise, the operator transforms a sequence of tuples like (K, V1, V2, ..) and (K, W1, W1, ..) into a sequence of tuples like (K, V1, V2, .., W1, W2, ..). It is equivalent to an inner join in SQL, or an outer join when remainder is true.
+reads_ch = Channel.fromFilePairs("$params.reads")
+reads_ch.view()
+
+```
+Run the pipeline:
+
+```default
+>>> nextflow run rnaseq.nf --outdir output
+...
+[gut, [/home/sli/nextflow_training/training/nf-training/data/ggal/gut_1.fq, /home/sli/nextflow_training/training/nf-training/data/ggal/gut_2.fq]]
+[liver, [/home/sli/nextflow_training/training/nf-training/data/ggal/liver_1.fq, /home/sli/nextflow_training/training/nf-training/data/ggal/liver_2.fq]]
+[lung, [/home/sli/nextflow_training/training/nf-training/data/ggal/lung_1.fq, /home/sli/nextflow_training/training/nf-training/data/ggal/lung_2.fq]]
+```
+
+## **6.1.2 `map` **
+
+The map operator applies a mapping function to each item in a channel. This function is expressed using the Groovy closure `{ }`. 
 
 For example:
+```default
+Channel
+    .of('hello', 'world')
+    .map { word -> [word, word.size()] }
+    .view()
+```
+In this example, a channel containing the strings `hello` and `world` is created. 
 
+Inside the `map` operator, `word` is used as the variable to represent the value that is passed to the operator, ie. each element in the channel, `hello` and `world`.
+
+The function defined by the `map` operator returns a tuple, where the first element is the string represented by the `word` variable, and the second element is the length of the string, emitted by the `size()` Groovy method. 
+
+
+Output:
+```default
+[hello, 5]
+[world, 5]
+```
+
+For our RNA-seq pipeline, let's first create separate transcriptome files for each organ: `lung.transcriptome.fa`, `liver.transcriptome.fa`, `gut.transcriptome.fa`
+
+```default
+cp "/scratch/users/.../nf-training/data/ggal/transcriptome.fa" "/scratch/users/.../nf-training/data/ggal/lung.transcriptome.fa"
+cp "/scratch/users/.../nf-training/data/ggal/transcriptome.fa" "/scratch/users/.../nf-training/data/ggal/liver.transcriptome.fa"
+mv "/scratch/users/.../nf-training/data/ggal/transcriptome.fa" "/scratch/users/.../nf-training/data/ggal/gut.transcriptome.fa"
+```
+
+Ensure `transcriptome.fa` no longer exists: 
+
+```default
+>>> ls /scratch/users/.../nf-training/data/ggal/
+gut_1.fq
+gut_2.fq
+gut.transcriptome.fa
+liver_1.fq
+liver_2.fq
+liver.transcriptome.fa
+lung_1.fq
+lung_2.fq
+lung.transcriptome.fa
+```
+
+
+**Exercise** 
+
+In the `rnaseq.nf` script, set the `transcriptome_file` parameter to match for all three `.fa` files using a glob path matcher.
+
+Use the `fromPath` channel factory to read in the transcriptome files, and the `map` operator to create a tuple where the first element is the organ of the `.fa`, and the second element is the path of the `.fa` file. Assign the final output to be a channel called `transcriptome_ch`.
+
+The `getSimpleName()` Groovy method can be used extract the organ name from the `.fa` file:
+
+```default
+>>> println file("/scratch/users/.../nf-training/data/ggal/lung.transcriptome.fa").getSimpleName()
+lung
+```
+Use the `view()` channel operator to view the `transcriptome_ch` channel. The expected output:
+```default
+[lung, /scratch/users/.../nf-training/data/ggal/lung.transcriptome.fa]
+[liver, /scratch/users/.../nf-training/data/ggal/liver.transcriptome.fa]
+[gut, /scratch/users/.../nf-training/data/ggal/gut.transcriptome.fa]
+```
+
+::: {.callout-note appearance="simple" collapse="true"}
+### Solution
+
+The `transcriptome_file` parameter is defined using `*`, using glob to match for all three `.fa` files. The `fromPath` channel factory is used to read the `.fa` files, and the `map` operator is used to create the tuple. 
+
+In the `map` function, the variable `fasta` was chosen to represent each element that is passed to the function. The function emits a tuple where the first element is the organ name, returned by the `getSimpleName()` method, and the second element is the `.fa` file path. 
+
+```default
+params.transcriptome_file = "/scratch/users/.../nf-training/data/ggal/*.fa"
+
+transcriptome_ch = Channel.fromPath("$params.transcriptome_file")
+    .map { fasta -> [fasta.getSimpleName(), fasta]}
+    .view()
+```
+:::
+
+</br>
+
+**Challenge** 
+
+Modify the `INDEX` process to accomodate the input structure of `transcriptome_ch`. Modify the output of `INDEX` so that a tuple is emitted, where the first elememt is the value of the grouping key, and the second element is the path of the `salmon_idx` folder.
+
+
+::: {.callout-note appearance="simple" collapse="true"}
+### Solution
+
+The input is now defined to be a tuple of two elements, where the first element is the grouping key and the second element is the path of the transcriptome file. 
+
+```default
+process INDEX {
+    container "/config/binaries/singularity/containers_devel/nextflow/depot.galaxyproject.org-singularity-salmon-1.10.1--h7e5ed60_0.img"
+
+    input:
+    tuple val(sample_id), path(transcriptome)
+
+    output:
+    tuple val(sample_id), path("salmon_idx")
+
+    script:
+    """
+    salmon index --threads $task.cpus -t $transcriptome -i salmon_idx
+    """
+}
+```
+:::
+
+</br>
+
+## **6.1.3 `join` **
+
+The `join` operator emits the inner product of two channels of tuples, using a matching grouping key.
+
+For example:
+```default
 left  = Channel.of( ['X', 1], ['Y', 2], ['Z', 3], ['P', 7] )
 right = Channel.of( ['Z', 6], ['Y', 5], ['X', 4] )
 
@@ -143,71 +322,46 @@ left.join(right).view()
 [Z, 3, 6]
 [Y, 2, 5]
 [X, 1, 4]
-
-
-
-create separate transcriptome.fa for each read type
-
-```default
-cp "/scratch/users/.../nf-training/ggal/transcriptome.fa" "/scratch/users/.../nf-training/ggal/lung.transcriptome.fa"
-
-cp "/scratch/users/.../nf-training/ggal/transcriptome.fa" "/scratch/users/.../nf-training/ggal/liver.transcriptome.fa"
-
-mv "/scratch/users/.../nf-training/ggal/transcriptome.fa" "/scratch/users/.../nf-training/ggal/gut.transcriptome.fa"
-
 ```
 
+**Exercise** 
+
+In the RNA-seq pipeline, index `transcriptome_ch` using the `INDEX` process. Emit the output as `index_ch`.
+
+Create a channel `quant_inputs_ch` that contains the `reads_ch` joined onto the `index_ch` using a matching key. The expected output:
 ```default
-
-params.transcriptome_file = "/scratch/users/.../nf-training/ggal/transcriptome*.fa"
-
-transcriptome_ch = Channel.fromPath("$params.transcriptome_file")
-    .map { fasta -> 
-        meta = fasta.simpleName
-        [meta, fasta]
-    }
-
-transcriptome_ch.view()
-
+[liver, /scratch/users/.../work/cf/42458b80e050a466d62baf99d0c1cf/salmon_idx, [/scratch/users/.../nf-training/data/ggal/liver_1.fq, /scratch/users/.../nf-training/data/ggal/liver_2.fq]]
+[lung, /scratch/users/.../work/64/90a77a5f1ed5a0000f6620fd1fab9a/salmon_idx, [/scratch/users/.../nf-training/data/ggal/lung_1.fq, /scratch/users/.../nf-training/data/ggal/lung_2.fq]]
+[gut, /scratch/users/.../work/37/352b00bfb71156a9250150428ddf1d/salmon_idx, [/scratch/users/.../nf-training/data/ggal/gut_1.fq, /scratch/users/.../nf-training/data/ggal/gut_2.fq]]
 ```
 
-now that reads_ch tuple and transcriptome_ch tuple have same matching grouping key, they can be joined
+Use `quant_inputs_ch` as the input for the `QT` process. Modify the process such that the input will be a tuple consisting of three elements, where the first element is the grouping key, the second element is the salmon index and the third element is the list of `.fq` reads. Also modify the output of the `QT` process to emit a tuple of two elements, where the first element is the grouping key and the second element is the `$sample_id` folder. Emit the output as `quant_ch` in the `workflow` block.
 
+::: {.callout-note appearance="simple" collapse="true"}
+### Solution
 
-```default
-
-joined_ch = reads_ch.join(transcriptome_ch)
-joined_ch.view()
-
-```
-
-Process has to be modified to accept new tuple structure
+The `reads_ch` is joined onto the `index_ch` using the `join` channel operator, and is assigned to the channel `quant_inputs_ch`. The new `quant_inputs_ch` channel is input into the `QT` process. 
 
 ```default
-process INDEX {
-    container "/config/binaries/singularity/containers_devel/nextflow/depot.galaxyproject.org-singularity-salmon-1.10.1--h7e5ed60_0.img"
+workflow {
+  index_ch = INDEX(transcriptome_ch)
 
-    input:
-    tuple val(meta), path(transcriptome)
-
-    output:
-    path "salmon_idx"
-
-    script:
-    """
-    salmon index --threads $task.cpus -t $transcriptome -i salmon_idx
-    """
+  quant_inputs_ch = index_ch.join(reads_ch)
+  quant_ch = QT(quant_inputs_ch)
 }
+```
 
+The `input` has been modified to be a tuple of three elements - the first element is the grouping key, the second element is the path to the salmon index, and the third element is the list of `.fq` reads.
 
+```default
 process QUANTIFICATION {
     container "/config/binaries/singularity/containers_devel/nextflow/depot.galaxyproject.org-singularity-salmon-1.10.1--h7e5ed60_0.img"
 
     input:
-    tuple val(sample_id), path(reads), path(salmon_index)
+    tuple val(sample_id), path(salmon_index), path(reads)
 
     output:
-    path "$sample_id"
+    tuple val(sample_id) path("$sample_id")
 
     script:
     """
@@ -215,33 +369,18 @@ process QUANTIFICATION {
     -i $salmon_index -1 ${reads[0]} -2 ${reads[1]} -o $sample_id
     """
 }
-
 ```
 
-in workflow block:
+:::
 
-```default
-workflow {
-  index_ch = INDEX(transcriptome_ch)
 
-  inputs_ch = reads_ch.join(index_ch)
+KEEP??????????
 
-  quant_ch = QUANTIFICATION(inputs_ch)
-  quant_ch.view()
+## **6.1. `combine` **
 
-  fastqc_ch = FASTQC(reads_ch)
-  multiqc_ch = MULTIQC(quant_ch, fastqc_ch)
-}
+The `combine` operator is similar to the `join` operator
 
-```
-
-USE JOIN OR COMBINE, NOT BOTH
-
-## **6.0. combine **
-
-Returns: queue channel
-
-The combine operator produces the combinations (i.e. cross product, “Cartesian” product) of two source channels, or a channel and a list (as the right operand), emitting each combination separately.
+produces the combinations (i.e. cross product, “Cartesian” product) of two source channels, or a channel and a list (as the right operand), emitting each combination separately.
 
 For example:
 
@@ -278,36 +417,7 @@ combine filters pairs with a matching key only if the by option is used, whereas
 combine with the by option merges and flattens each pair, whereas cross does not. Compare the examples for combine and cross to see this difference.
 
 
-## **6.0. collect **
-
-Returns: value channel
-
-The collect operator collects all items from a source channel into a list and emits it as a single item:
-
-Channel.of( 1, 2, 3, 4 )
-    .collect()
-    .view()
-[1, 2, 3, 4]
-An optional closure can be used to transform each item before it is collected:
-
-Channel.of( 'hello', 'ciao', 'bonjour' )
-    .collect { it.length() }
-    .view()
-[5, 4, 7]
-Available options:
-
-flat
-When true, nested list structures are flattened and their items are collected individually (default: true).
-sort
-When true, the collected items are sorted by their natural ordering (default: false). Can also be a closure or a Comparator which defines how items are compared during sorting.
-
-
-
-
-THINK OF EXAMPLE HERE
-
-
-## **6.0. groupTuple **
+## **6.0. `groupTuple` **
 
 Returns: queue channel
 
