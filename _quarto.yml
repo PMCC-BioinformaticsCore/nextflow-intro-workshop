@@ -35,6 +35,8 @@ website:
           href: workshops/5.1_nf_core_template.html
         - text: "Nextflow Operators"
           href: workshops/6.1_operators.html
+        - text: "Output, scatter, and Gather"
+          href: workshops/8.1_scatter_gather_output.html
 
 format:
   html:
