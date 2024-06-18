@@ -13,7 +13,6 @@ from: markdown+emoji
 
 :::
 
-
 ## **Environment Setup**
 
 Set up an interactive shell to run our Nextflow workflow: 
@@ -182,7 +181,6 @@ params.transcriptome_file = "/scratch/users/.../nf-training/ggal/transcriptome.f
 
 reads_ch = Channel.fromFilePairs("$params.reads")
 reads_ch.view()
-
 ```
 Run the pipeline:
 
@@ -198,7 +196,6 @@ Run the pipeline:
 
 The map operator applies a mapping function to each item in a channel. This function is expressed using the Groovy closure `{ }`. 
 
-For example:
 ```default
 Channel
     .of('hello', 'world')
@@ -266,14 +263,16 @@ Use the `view()` channel operator to view the `transcriptome_ch` channel. The ex
 
 The `transcriptome_file` parameter is defined using `*`, using glob to match for all three `.fa` files. The `fromPath` channel factory is used to read the `.fa` files, and the `map` operator is used to create the tuple. 
 
-In the `map` function, the variable `fasta` was chosen to represent each element that is passed to the function. The function emits a tuple where the first element is the organ name, returned by the `getSimpleName()` method, and the second element is the `.fa` file path. 
+In the `map` function, the variable `file` was chosen to represent each element that is passed to the function. The function emits a tuple where the first element is the organ name, returned by the `getSimpleName()` method, and the second element is the `.fa` file path. 
 
 ```default
 params.transcriptome_file = "/scratch/users/.../nf-training/data/ggal/*.fa"
 
 transcriptome_ch = Channel.fromPath("$params.transcriptome_file")
-    .map { fasta -> [fasta.getSimpleName(), fasta]}
-    .view()
+    .map { file -> 
+    def group_key = file.getSimpleName()
+    [group_key, fasta]
+    }
 ```
 :::
 
@@ -281,7 +280,7 @@ transcriptome_ch = Channel.fromPath("$params.transcriptome_file")
 
 **Challenge** 
 
-Modify the `INDEX` process to accomodate the input structure of `transcriptome_ch`. Modify the output of `INDEX` so that a tuple is emitted, where the first elememt is the value of the grouping key, and the second element is the path of the `salmon_idx` folder.
+Modify the `INDEX` process to match the input structure of `transcriptome_ch`. Modify the output of `INDEX` so that a tuple is emitted, where the first elememt is the value of the grouping key, and the second element is the path of the `salmon_idx` folder.
 
 
 ::: {.callout-note appearance="simple" collapse="true"}
@@ -309,26 +308,57 @@ process INDEX {
 
 </br>
 
-## **6.1.3 `join` **
+## **6.1.3 `combine` **
 
-The `join` operator emits the inner product of two channels of tuples, using a matching grouping key.
+The `combine` operator produces the cross product (ie. outer product) combinations of two source channels.
 
-For example:
+For example: The `words` channel is combined with the `numbers` channel, emitting a channel where each element of `numbers` is paired with each element of `words`.
+
 ```default
-left  = Channel.of( ['X', 1], ['Y', 2], ['Z', 3], ['P', 7] )
-right = Channel.of( ['Z', 6], ['Y', 5], ['X', 4] )
+numbers = Channel.of(1, 2, 3)
+words = Channel.of('hello', 'ciao')
 
-left.join(right).view()
-[Z, 3, 6]
-[Y, 2, 5]
-[X, 1, 4]
+numbers.combine(words).view()
+
+```
+
+Output:
+```default
+[1, hello]
+[2, hello]
+[3, hello]
+[1, ciao]
+[2, ciao]
+[3, ciao]
+```
+
+The `by` option can be used to combine items that share a matching key. This value is zero-based, and represents the index or list of indices for the grouping key. The emitted tuple will consist of multiple elements, where the first element is the grouping key, and the following elements are the values of the input channels. 
+
+For example: `source` and `target` are channels consisting of multiple tuples, where the first element of each tuple represents the grouping key. Since indexing is zero-based, `by` is set to `0` to represent the first element of the tuple. Each value within the `source` and `target` channels are separate elements in the emitted tuple. 
+
+```default
+source = Channel.of( [1, 'alpha'], [2, 'beta'] )
+target = Channel.of( [1, 'x'], [1, 'y'], [1, 'z'], [2, 'p'], [2, 'q'], [2, 't'] )
+
+source.combine(target, by: 0).view()
+```
+Output:
+```default
+[1, alpha, x]
+[1, alpha, y]
+[1, alpha, z]
+[2, beta, p]
+[2, beta, q]
+[2, beta, t]
 ```
 
 **Exercise** 
 
 In the RNA-seq pipeline, index `transcriptome_ch` using the `INDEX` process. Emit the output as `index_ch`.
 
-Create a channel `quant_inputs_ch` that contains the `reads_ch` joined onto the `index_ch` using a matching key. The expected output:
+Create a channel `quant_inputs_ch` that contains the `reads_ch` combined with the `index_ch` using a matching key. The emitted channel should contain three elements, where the first element is the grouping key, the second element is the path to the salmon index file, and the third element is a list of the `.fq` pairs.
+
+The expected output:
 ```default
 [liver, /scratch/users/.../work/cf/42458b80e050a466d62baf99d0c1cf/salmon_idx, [/scratch/users/.../nf-training/data/ggal/liver_1.fq, /scratch/users/.../nf-training/data/ggal/liver_2.fq]]
 [lung, /scratch/users/.../work/64/90a77a5f1ed5a0000f6620fd1fab9a/salmon_idx, [/scratch/users/.../nf-training/data/ggal/lung_1.fq, /scratch/users/.../nf-training/data/ggal/lung_2.fq]]
@@ -340,18 +370,18 @@ Use `quant_inputs_ch` as the input for the `QT` process. Modify the process such
 ::: {.callout-note appearance="simple" collapse="true"}
 ### Solution
 
-The `reads_ch` is joined onto the `index_ch` using the `join` channel operator, and is assigned to the channel `quant_inputs_ch`. The new `quant_inputs_ch` channel is input into the `QT` process. 
+The `reads_ch` is combined with the `index_ch` using the `combine` channel operator, and is assigned to the channel `quant_inputs_ch`. The new `quant_inputs_ch` channel is input into the `QT` process. 
 
 ```default
 workflow {
   index_ch = INDEX(transcriptome_ch)
 
-  quant_inputs_ch = index_ch.join(reads_ch)
+  quant_inputs_ch = index_ch.combine(reads_ch, by: 0)
   quant_ch = QT(quant_inputs_ch)
 }
 ```
 
-The `input` has been modified to be a tuple of three elements - the first element is the grouping key, the second element is the path to the salmon index, and the third element is the list of `.fq` reads.
+In te `QT` process, the `input` has been modified to be a tuple of three elements - the first element is the grouping key, the second element is the path to the salmon index, and the third element is the list of `.fq` reads.
 
 ```default
 process QUANTIFICATION {
@@ -374,67 +404,25 @@ process QUANTIFICATION {
 :::
 
 
-KEEP??????????
+## **6.1.4 `groupTuple` **
 
-## **6.1. `combine` **
+The `groupTuple` operator collects tuples into groups based on a grouping key, emitting a new tuple for each distinct key. The `groupTuple` differs from the `combine` operator in that it is performed on one input channel, and the matching values are emitted as a list. 
 
-The `combine` operator is similar to the `join` operator
-
-produces the combinations (i.e. cross product, “Cartesian” product) of two source channels, or a channel and a list (as the right operand), emitting each combination separately.
-
-For example:
-
-numbers = Channel.of(1, 2, 3)
-words = Channel.of('hello', 'ciao')
-
-numbers
-    .combine(words)
-    .view()
-[1, hello]
-[2, hello]
-[3, hello]
-[1, ciao]
-[2, ciao]
-[3, ciao]
-The by option can be used to combine items that share a matching key. The value should be the zero-based index of the tuple, or a list of indices. For example:
-
-source = Channel.of( [1, 'alpha'], [2, 'beta'] )
-target = Channel.of( [1, 'x'], [1, 'y'], [1, 'z'], [2, 'p'], [2, 'q'], [2, 't'] )
-
-source.combine(target, by: 0).view()
-[1, alpha, x]
-[1, alpha, y]
-[1, alpha, z]
-[2, beta, p]
-[2, beta, q]
-[2, beta, t]
-Note
-
-The combine operator is similar to cross and join, making them easy to confuse. Their differences can be summarized as follows:
-
-combine and cross both produce an outer product or cross product, whereas join produces an inner product.
-combine filters pairs with a matching key only if the by option is used, whereas cross always filters pairs with a matching key.
-combine with the by option merges and flattens each pair, whereas cross does not. Compare the examples for combine and cross to see this difference.
-
-
-## **6.0. `groupTuple` **
-
-Returns: queue channel
-
-The groupTuple operator collects lists (i.e. tuples) from a source channel into groups based on a grouping key. A new tuple is emitted for each distinct key.
-
-To be more precise, the operator transforms a sequence of tuples like (K, V, W, ..) into a sequence of tuples like (K, list(V), list(W), ..).
-
-For example:
-
+```default
 Channel.of( [1, 'A'], [1, 'B'], [2, 'C'], [3, 'B'], [1, 'C'], [2, 'A'], [3, 'D'] )
     .groupTuple()
     .view()
+```
+Output:
+```default
 [1, [A, B, C]]
 [2, [C, A]]
 [3, [B, D]]
-By default, the first element of each tuple is used as the grouping key. The by option can be used to specify a different index, or list of indices. For example, to group by the second element of each tuple:
+```
 
+By default, the first element of each tuple is used as the grouping key. The `by` option can be used to specify a different index. For example, to group by the second element of each tuple:
+
+```default
 Channel.of( [1, 'A'], [1, 'B'], [2, 'C'], [3, 'B'], [1, 'C'], [2, 'A'], [3, 'D'] )
     .groupTuple(by: 1)
     .view()
@@ -442,210 +430,266 @@ Channel.of( [1, 'A'], [1, 'B'], [2, 'C'], [3, 'B'], [1, 'C'], [2, 'A'], [3, 'D']
 [[1, 3], B]
 [[2, 1], C]
 [[3], D]
-By default, if you don’t specify a size, the groupTuple operator will not emit any groups until all inputs have been received. If possible, you should always try to specify the number of expected elements in each group using the size option, so that each group can be emitted as soon as it’s ready. In cases where the size of each group varies based on the grouping key, you can use the built-in groupKey() function, which allows you to define a different expected size for each group:
-
-chr_frequency = ["chr1": 2, "chr2": 3]
-
-Channel.of(
-        ['region1', 'chr1', '/path/to/region1_chr1.vcf'],
-        ['region2', 'chr1', '/path/to/region2_chr1.vcf'],
-        ['region1', 'chr2', '/path/to/region1_chr2.vcf'],
-        ['region2', 'chr2', '/path/to/region2_chr2.vcf'],
-        ['region3', 'chr2', '/path/to/region3_chr2.vcf']
-    )
-    .map { region, chr, vcf -> tuple( groupKey(chr, chr_frequency[chr]), vcf ) }
-    .groupTuple()
-    .view()
-[chr1, [/path/to/region1_chr1.vcf, /path/to/region2_chr1.vcf]]
-[chr2, [/path/to/region1_chr2.vcf, /path/to/region2_chr2.vcf, /path/to/region3_chr2.vcf]]
-Available options:
-
-by
-The zero-based index of the element to use as the grouping key. Can also be a list of indices, e.g. by: [0,2] (default: [0]).
-remainder
-When true, incomplete tuples (i.e. groups with less than size items) are emitted as partial groups, otherwise they are discarded (default: false). This option can only be used with size.
-size
-The required number of items for each group. When a group reaches the required size, it is emitted.
-sort
-Defines the sorting criteria for the grouped items. Can be one of the following values:
-
-false: No sorting is applied (default).
-true: Order the grouped items by the item’s natural ordering i.e. numerical for number, lexicographic for string, etc. See the Java documentation for more information.
-'hash': Order the grouped items by the hash number associated to each entry.
-'deep': Similar to the previous, but the hash number is created on actual entries content e.g. when the item is a file, the hash is created on the actual file content.
-A custom sorting criteria used to order the nested list elements of each tuple. It can be a Closure or a Comparator object.
-
-
-copy same fastq data into lane 2 
-
-```default
-#!/usr/bin/env nextflow
-
-params.reads_lane2 = "/scratch/users/.../nf-training/data/ggal/*_{1,2}.fq"
-reads_lane2_ch = Channel.fromFilePairs("$params.reads_lane2")
-reads_lane2_ch.view()
-
 ```
 
-has same grouping key. also assign trancrptome and input into process (create module)
-
-
-```default
-
-include {QUANTIFICATION as QUANTIFICATION1} from ../vcadihvidsv
-include {QUANTIFICATION as QUANTIFICATION2} from ../vcadihvidsv
-
-
-process MERGE_QUANTIFICATION {
-    input:
-    tuple val(meta), path(quant1), path(quant2)
-
-    output:
-    tuple val(meta), path("merged")
-
-    script:
-
-    """
-    mkdir merged
-    cp quant1/* \$merged
-    cp quant2/* \$merged
-
-    """
-
-}
-
-```
-
-workflow block: (still need to change downstream processes FASTQC + MULTIQC)
-
-```default
-workflow {
-  index_ch = INDEX(transcriptome_ch)
-
-  inputs_ch = reads_ch.join(index_ch)
-
-  reads_lane2_ch = Channel.fromFilePairs("$params.reads_lane2")
-  reads_lane2_ch.view()
-
-  inputs2_ch = reads_lane2_ch.join(index_ch)
-
-  quant_ch = QUANTIFICATION1(inputs_ch)
-  quant_ch.view()
-
-  quant2_ch = QUANTIFICATION2(inputs2_ch)
-  quant2_ch.view()
-
-  quant_joined = quant_ch.join(quant2_ch)
-  merged_quant_ch = MERGE_QUANTIFICATION(quant_joined)
-
-  fastqc_ch = FASTQC(reads_ch)
-  multiqc_ch = MULTIQC(quant_ch, fastqc_ch)
-}
-
-```
-
-
-
-
-## **6.0. branch **
-
-
-Returns: multiple queue channels or value channels, matching the source type
-
-The branch operator forwards each item from a source channel to one of multiple output channels, based on a selection criteria.
-
-The selection criteria is a closure that defines, for each output channel, a unique label followed by a boolean expression. When an item is received, it is routed to the first output channel whose expression evaluates to true. For example:
-
-Channel.of(1, 2, 3, 40, 50)
-    .branch {
-        small: it < 10
-        large: it > 10
-    }
-    .set { result }
-
-result.small.view { "$it is small" }
-result.large.view { "$it is large" }
-1 is small
-2 is small
-3 is small
-40 is large
-50 is large 
-
-The value emitted to each branch can be customized with an expression statement (or statements) after the branch condition:
-
-Channel.of(1, 2, 3, 40, 50)
-    .branch {
-        foo: it < 10
-            return it+2
-
-        bar: it < 50
-            return it-2
-
-        other: true
-            return 0
-    }
-    .set { result }
-
-result.foo.view { "$it is foo" }
-result.bar.view { "$it is bar" }
-result.other.view { "$it is other" }
-3 is foo
-4 is foo
-5 is foo
-38 is bar
-
-When the return keyword is omitted, the value of the last expression statement is implicitly returned.
-The branchCriteria() method can be used to create a branch criteria as a variable that can be passed as an argument to any number of branch operations, as shown below:
-
-def criteria = branchCriteria {
-    small: it < 10
-    large: it > 10
-}
-
-Channel.of(1, 2, 30).branch(criteria).set { ch1 }
-Channel.of(10, 20, 3).branch(criteria).set { ch2 }
-
-ch1.small.view { "$it is small" }
-ch1.large.view { "$it is large" }
-ch2.small.view { "$it is small" }
-ch2.large.view { "$it is large" }
-1 is small
-2 is small
-3 is small
-20 is large
-30 is large
-
-
-
-
-read in all inouts together, then separate by file type
+In the RNA-seq pipeline, the `fromFilePairs` channel factory has been used to to convert paired `.fq` to a channel of tuples: 
 
 ```default
 #!/usr/bin/env nextflow
 
 params.reads = "/scratch/users/.../nf-training/data/ggal/*_{1,2}.fq"
+params.transcriptome_file = "/scratch/users/.../nf-training/ggal/transcriptome.fa"
+
 reads_ch = Channel.fromFilePairs("$params.reads")
-reads_ch.view
-
-reads_ch.branch {meta, fastqs ->
-    single: fastqs.size() = 1
-        meta.paired = false
-        return [meta, fastqs]
-    multiple: fastqs.size() > 1
-        meta.paired = true
-        return [meta, fastqs]
-
-}
-
-reads_ch.single.view()
-reads_ch.paired.view()
-
+reads_ch.view()
 ```
 
-Use paired reads for one process, different process for nonpaired....
+Now, move the `/scratch/users/.../nf-training/data/ggal/lung_2.fq` file into another directory so the folder contains one lung `.fq` file: 
+```default
+>>> mv /scratch/users/.../nf-training/data/ggal/lung_2.fq .
+>>> ls /scratch/users/.../nf-training/data/ggal
+gut_1.fq
+gut_2.fq
+gut.transcriptome.fa
+liver_1.fq
+liver_2.fq
+liver.transcriptome.fa
+lung_1.fq
+lung.transcriptome.fa
+```
+
+**Exercise** 
+
+Use the `fromPath` channel operator to read all `.fq` files. Then, use `map` to create a mapping function that returns a tuple, where the first element is the grouping key, and the second element is the `.fq` file. Then, use `groupTuple()` to  create channels containing both paired and single-end `.fq` files. 
+
+Expected output:
+```default
+[lung, [/scratch/users/.../nf-training/data/ggal/lung_1.fq]]
+[gut, [/scratch/users/.../nf-training/data/ggal/gut_2.fq, /scratch/users/.../nf-training/data/ggal/gut_1.fq]]
+[liver, [/scratch/users/.../nf-training/data/ggal/liver_1.fq, /scratch/users/.../nf-training/data/ggal/liver_2.fq]]
+```
+
+The grouping key can be defined as the following. `file` is the implicit variable defined inside the function that represents each `.fq` file. The `getName()` method will return the file name without the full path. `replaceAll` is used to remove the `_2.fq` and `_1.fq` file suffixes. 
+
+```default
+def group_key = file.getName().replaceAll(/_2.fq/,'').replaceAll(/_1.fq/,'')
+```
+
+For `file = /scratch/users/.../nf-training/data/ggal/gut_2.fq`, the defined `group_key` will be `gut`. 
+
+For a full list of Nextflow file attributes, see [here](https://www.nextflow.io/docs/latest/script.html).
+
+::: {.callout-note appearance="simple" collapse="true"}
+### Solution
+
+```default
+reads_ch = Channel.fromPath("/home/sli/nextflow_training/training/nf-training/data/ggal/*.fq")
+  .map { file ->
+    def group_key = file.getName().replaceAll(/_2.fq/,'').replaceAll(/_1.fq/,'')
+    [group_key, file]
+  }
+  .groupTuple()
+  .view()
+```
+:::
+
+The `quant_inputs_ch` should now consist of:
+```default
+[liver, /scratch/users/.../work/cf/42458b80e050a466d62baf99d0c1cf/salmon_idx, [/scratch/users/.../nf-training/data/ggal/liver_1.fq, /scratch/users/.../nf-training/data/ggal/liver_2.fq]]
+[lung, /scratch/users/.../work/64/90a77a5f1ed5a0000f6620fd1fab9a/salmon_idx, [/scratch/users/.../nf-training/data/ggal/lung_1.fq]]
+[gut, /scratch/users/.../work/37/352b00bfb71156a9250150428ddf1d/salmon_idx, [/scratch/users/.../nf-training/data/ggal/gut_1.fq, /scratch/users/.../nf-training/data/ggal/gut_2.fq]]
+```
 
 
+## **6.1.5 `flatten` **
+The flatten operator flattens each item from a source channel and emits the elements separately. Deeply nested inputs are also flattened. 
 
+```default
+Channel.of( [1, [2, 3]], 4, [5, [6]] )
+    .flatten()
+    .view()
+``` 
+Output:
+```default
+1
+2
+3
+4
+5
+6
+```
+
+Within the script block of the `QUANTIFICATION` process in the RNA-seq pipeline, we are assuming the reads are paired, and specify `-1 ${reads[0]} -2 ${reads[1]}` as inputs to `salmon quant`. 
+
+```default
+process QUANTIFICATION {
+    container "/config/binaries/singularity/containers_devel/nextflow/depot.galaxyproject.org-singularity-salmon-1.10.1--h7e5ed60_0.img"
+
+    input:
+    tuple val(sample_id), path(salmon_index), path(reads)
+
+    output:
+    tuple val(sample_id) path("$sample_id")
+
+    script:
+    """
+    salmon quant --threads $task.cpus --libType=U \
+    -i $salmon_index -1 ${reads[0]} -2 ${reads[1]} -o $sample_id
+    """
+}
+```
+Now that the input `reads` can be either single or paired-end, the `QUANTIFICATION` process needs to be modified to allow for either input type. This can be done using the `flatten()` operator, and conditional script statements. Additionally, the `size()` method can be used to calculate the size of a list. 
+
+The script block can be changed to the following: 
+
+```default
+    script:
+    def input_reads = [reads]
+    if( input_reads.flatten().size() == 1 )
+        """
+        salmon quant --threads $task.cpus --libType=U \
+        -i $salmon_index -r $reads -o $sample_id
+        """
+    else 
+        """
+        salmon quant --threads $task.cpus --libType=U \\
+        -i $salmon_index -1 ${reads[0]} -2 ${reads[1]} -o $sample_id
+        """
+```
+
+First, a new variable `input_reads` is defined, which consists of the `reads` input being converted into a list. This has to be done since Nextflow will automatically convert a list of length 1 into a path within process. If the `size()` method was used on a `path` type input, it will return the size of the file in bytes, and not the list size. Therefore, all inputs must first be converted into a list in order to correctly caculate the number of files. 
+
+```default
+def input_reads = [reads]
+```
+
+For `reads` that are already in a list (ie. paired reads), this will nest the input into another list, for example:
+
+```default
+[ [ file1, file2 ] ]
+```
+If the `size()` operator is used on this input, it will always return `1` since the encompassing list only contains one element. Therefore, the `flatten()` operator has to be used to emit the files as separate elements. 
+
+The final definition to obtain the number of files in `reads` becomes:
+```default
+input_reads.flatten().size()
+```
+
+For single reads, the input to `salmon quant` becomes `-r $reads`
+
+**Exercise** 
+
+Currently the `TRIMGALORE` process only accounts for paired reads. Modify the process such that both single and paired-end reads can be used. For single reads, the following script block can be used:
+
+```default
+"""
+trim_galore \\
+  --gzip \\
+  $reads
+"""
+```
+
+
+::: {.callout-note appearance="simple" collapse="true"}
+### Solution
+
+```default
+process TRIMGALORE {
+  container '/config/binaries/singularity/containers_devel/nextflow/depot.galaxyproject.org-singularity-trim-galore-0.6.6--0.img' 
+
+  input:
+    tuple val(sample_id), path(reads)
+  
+  output:
+    tuple val(sample_id), path("*{3prime,5prime,trimmed,val}*.fq.gz"), emit: reads
+    tuple val(sample_id), path("*report.txt")                        , emit: log     , optional: true
+    tuple val(sample_id), path("*unpaired*.fq.gz")                   , emit: unpaired, optional: true
+    tuple val(sample_id), path("*.html")                             , emit: html    , optional: true
+    tuple val(sample_id), path("*.zip")                              , emit: zip     , optional: true
+
+  script:
+  def input_reads = [reads]
+
+  if( input_reads.flatten().size() == 1 )
+    """
+    trim_galore \\
+      --gzip \\
+      $reads
+    """
+  else
+    """
+    trim_galore \\
+      --paired \\
+      --gzip \\
+      ${reads[0]} \\
+      ${reads[1]}
+    """
+
+}
+```
+:::
+
+**Extension** 
+
+Modify the `FASTQC` process such that the output is a tuple where the first element is the grouping key, and the second element is the path to the fastqc logs.
+
+Modify the `MULTIQC` process such that the output is a tuple where the first element is the grouping key, and the second element is the path to the generated `html` file. 
+
+Finally, run the entire workflow, specifying an `--outdir`. The workflow block should look like this:
+
+```default
+workflow {
+  index_ch = INDEX(transcriptome_ch)
+
+  quant_inputs_ch = index_ch.combine(reads_ch, by: 0)
+  quant_ch = QT(quant_inputs_ch)
+
+  trimgalore_out_ch = TRIMGALORE(reads_ch).reads
+
+  fastqc_ch = FASTQC_one(reads_ch)
+  fastqc_cleaned_ch = FASTQC_two(trimgalore_out_ch)
+  multiqc_ch = MULTIQC(quant_ch, fastqc_ch)
+}
+```
+
+::: {.callout-note appearance="simple" collapse="true"}
+### Solution
+
+```default
+process FASTQC {
+    container "/config/binaries/singularity/containers_devel/nextflow/depot.galaxyproject.org-singularity-fastqc-0.12.1--hdfd78af_0.img"
+
+    input:
+    tuple val(sample_id), path(reads)
+
+    output:
+    tuple val(sample_id), path("fastqc_${sample_id}_logs")
+
+    script:
+    """
+    mkdir fastqc_${sample_id}_logs
+    fastqc -o fastqc_${sample_id}_logs -f fastq -q ${reads}
+    """
+}
+
+process MULTIQC {
+    publishDir params.outdir, mode:'copy'
+    container "/config/binaries/singularity/containers_devel/nextflow/depot.galaxyproject.org-singularity-multiqc-1.21--pyhdfd78af_0.img"
+
+    input:
+    tuple val(sample_id), path(quantification)
+    tuple val(sample_id), path(fastqc)
+
+    output:
+    tuple val(sample_id), path("*.html")
+
+    script:
+    """
+    multiqc . --filename $quantification
+    """
+}
+```
+:::
 
 ---
 ^*This workshop is adapted from [Fundamentals Training](https://training.nextflow.io/basic_training/), [Advanced Training](https://training.nextflow.io/advanced/), [Developer Tutorials](https://nf-co.re/docs/contributing/tutorials/creating_with_nf_core#creating-a-pipeline), [Nextflow Patterns](https://nextflow-io.github.io/patterns/) materials from Nextflow, nf-core [nf-core tools documentation](https://nf-co.re/docs/nf-core-tools) and [nf-validation](https://nextflow-io.github.io/nf-validation/)*^
