@@ -10,7 +10,7 @@ from: markdown+emoji
 ::: callout-tip
 
 ### Objectives{.unlisted}
-
+- Gain an understanding of Nextflow channel operators
 :::
 
 ## **Environment Setup**
