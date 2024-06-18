@@ -38,12 +38,18 @@ Singularity images downloaded by workflow executions will now be stored in this 
 
 You may want to include these, or other environmental variables, in your `.bashrc` file (or alternate) that is loaded when you log in so you don’t need to export variables every session. A complete list of environment variables can be found [here](https://www.nextflow.io/docs/latest/config.html#environment-variables).
 
+The training data can be cloned from:
+```default
+git clone https://github.com/nextflow-io/training.git
+```
 
-## **6.1.1 Create Input Channels **
 
-Previously, we created three Nextflow files:
+## **RNA-seq Workflow and Module Files **
+
+Previously, we created three Nextflow files and one config file:
 
 ```default
+├── nextflow.config
 ├── rnaseq.nf
 ├── modules.nf
 └── modules
@@ -59,7 +65,6 @@ params.reads = "/scratch/users/.../training/nf-training/data/ggal/*_{1,2}.fq"
 params.transcriptome_file = "/scratch/users/.../training/nf-training/data/ggal/transcriptome.fa"
 
 reads_ch = Channel.fromFilePairs("$params.reads")
-reads_ch.view()
 
 include { INDEX } from './modules.nf'
 include { QUANTIFICATION as QT } from './modules.nf'
@@ -171,43 +176,48 @@ process TRIMGALORE {
 }
 ```
 
-In the workflow script `rnaseq.nf` we defined the `reads` parameter to be multiple paired `.fq` files, and the `transcriptome_file` parameter to be a single transcriptome file. A channel was created from the paired `.fq` files using the `fromFilePairs` channel factory, which created a tuple where the first element is a unique grouping key created based on similarities in file name, and the second element contains the list of paired files.
-
+- `nextflow.config`: config file that enables singularity
 ```default
-#!/usr/bin/env nextflow
-
-params.reads = "/scratch/users/.../nf-training/data/ggal/*_{1,2}.fq"
-params.transcriptome_file = "/scratch/users/.../nf-training/ggal/transcriptome.fa"
-
-reads_ch = Channel.fromFilePairs("$params.reads")
-reads_ch.view()
+singularity {
+  enabled = true
+  autoMounts = true
+  cacheDir = "/config/binaries/singularity/containers_devel/nextflow"
+}
 ```
-Run the pipeline:
+
+Run the pipeline, specifying `--outdir`:
 
 ```default
 >>> nextflow run rnaseq.nf --outdir output
-...
-[gut, [/home/sli/nextflow_training/training/nf-training/data/ggal/gut_1.fq, /home/sli/nextflow_training/training/nf-training/data/ggal/gut_2.fq]]
-[liver, [/home/sli/nextflow_training/training/nf-training/data/ggal/liver_1.fq, /home/sli/nextflow_training/training/nf-training/data/ggal/liver_2.fq]]
-[lung, [/home/sli/nextflow_training/training/nf-training/data/ggal/lung_1.fq, /home/sli/nextflow_training/training/nf-training/data/ggal/lung_2.fq]]
+N E X T F L O W  ~  version 23.04.1
+Launching `rnaseq.nf` [soggy_jennings] DSL2 - revision: 87afc1d98d
+executor >  local (16)
+[93/d37ef0] process > INDEX          [100%] 1 of 1 ✔
+[b3/4c4d9c] process > QT (1)         [100%] 3 of 3 ✔
+[d0/173a6e] process > FASTQC_one (3) [100%] 3 of 3 ✔
+[58/0b8af2] process > TRIMGALORE (3) [100%] 3 of 3 ✔
+[c6/def175] process > FASTQC_two (3) [100%] 3 of 3 ✔
+[e0/bcf904] process > MULTIQC (3)    [100%] 3 of 3 ✔
 ```
 
-## **6.1.2 `map` **
+## **6.1.1 `map` **
 
 The map operator applies a mapping function to each item in a channel. This function is expressed using the Groovy closure `{ }`. 
 
 ```default
 Channel
     .of('hello', 'world')
-    .map { word -> [word, word.size()] }
+    .map { word -> 
+        def word_size = word.size()
+        [word, word_size] 
+    }
     .view()
 ```
 In this example, a channel containing the strings `hello` and `world` is created. 
 
-Inside the `map` operator, `word` is used as the variable to represent the value that is passed to the operator, ie. each element in the channel, `hello` and `world`.
+Inside the `map` operator, the local variable `word` is declared, and used to represent each input value that is passed to the function, ie. each element in the channel, `hello` and `world`. 
 
-The function defined by the `map` operator returns a tuple, where the first element is the string represented by the `word` variable, and the second element is the length of the string, emitted by the `size()` Groovy method. 
-
+The `map` operator 'loops' through each element in the channel and assigns that element to the local varialbe `word`. A new local variable `word_size` is defined inside the `map` function, and calculates the length of the string using `size()`. Finally, a tuple is returned, where the first element is the string represented by the local `word` variable, and the second element is the length of the string, represented by the local `word_size` variable. 
 
 Output:
 ```default
@@ -218,15 +228,15 @@ Output:
 For our RNA-seq pipeline, let's first create separate transcriptome files for each organ: `lung.transcriptome.fa`, `liver.transcriptome.fa`, `gut.transcriptome.fa`
 
 ```default
-cp "/scratch/users/.../nf-training/data/ggal/transcriptome.fa" "/scratch/users/.../nf-training/data/ggal/lung.transcriptome.fa"
-cp "/scratch/users/.../nf-training/data/ggal/transcriptome.fa" "/scratch/users/.../nf-training/data/ggal/liver.transcriptome.fa"
-mv "/scratch/users/.../nf-training/data/ggal/transcriptome.fa" "/scratch/users/.../nf-training/data/ggal/gut.transcriptome.fa"
+cp "/scratch/users/.../training/nf-training/data/ggal/transcriptome.fa" "/scratch/users/.../training/nf-training/data/ggal/lung.transcriptome.fa"
+cp "/scratch/users/.../training/nf-training/data/ggal/transcriptome.fa" "/scratch/users/.../training/nf-training/data/ggal/liver.transcriptome.fa"
+mv "/scratch/users/.../training/nf-training/data/ggal/transcriptome.fa" "/scratch/users/.../training/nf-training/data/ggal/gut.transcriptome.fa"
 ```
 
 Ensure `transcriptome.fa` no longer exists: 
 
 ```default
->>> ls /scratch/users/.../nf-training/data/ggal/
+>>> ls /scratch/users/.../training/nf-training/data/ggal/
 gut_1.fq
 gut_2.fq
 gut.transcriptome.fa
@@ -241,21 +251,26 @@ lung.transcriptome.fa
 
 **Exercise** 
 
-In the `rnaseq.nf` script, set the `transcriptome_file` parameter to match for all three `.fa` files using a glob path matcher.
-
-Use the `fromPath` channel factory to read in the transcriptome files, and the `map` operator to create a tuple where the first element is the organ of the `.fa`, and the second element is the path of the `.fa` file. Assign the final output to be a channel called `transcriptome_ch`.
-
-The `getSimpleName()` Groovy method can be used extract the organ name from the `.fa` file:
+Currently in the `rnaseq.nf` script, we define the `transcriptome_file` parameter to be a single file. 
 
 ```default
->>> println file("/scratch/users/.../nf-training/data/ggal/lung.transcriptome.fa").getSimpleName()
-lung
+params.transcriptome_file = "/scratch/users/.../training/nf-training/data/ggal/transcriptome.fa"
+```
+
+Set the `transcriptome_file` parameter to match for all three `.fa` files using a glob path matcher.
+
+Use the `fromPath` channel factory to read in the transcriptome files, and the `map` operator to create a tuple where the first element is the sample (organ type) of the `.fa`, and the second element is the path of the `.fa` file. Assign the final output to be a channel called `transcriptome_ch`.
+
+The `getSimpleName()` Groovy method can be used extract the sample name from our `.fa` file, for example:
+
+```default
+def sample = fasta.getSimpleName()
 ```
 Use the `view()` channel operator to view the `transcriptome_ch` channel. The expected output:
 ```default
-[lung, /scratch/users/.../nf-training/data/ggal/lung.transcriptome.fa]
-[liver, /scratch/users/.../nf-training/data/ggal/liver.transcriptome.fa]
-[gut, /scratch/users/.../nf-training/data/ggal/gut.transcriptome.fa]
+[lung, /scratch/users/.../training/nf-training/data/ggal/lung.transcriptome.fa]
+[liver, /scratch/users/.../training/nf-training/data/ggal/liver.transcriptome.fa]
+[gut, /scratch/users/.../training/nf-training/data/ggal/gut.transcriptome.fa]
 ```
 
 ::: {.callout-note appearance="simple" collapse="true"}
@@ -263,16 +278,17 @@ Use the `view()` channel operator to view the `transcriptome_ch` channel. The ex
 
 The `transcriptome_file` parameter is defined using `*`, using glob to match for all three `.fa` files. The `fromPath` channel factory is used to read the `.fa` files, and the `map` operator is used to create the tuple. 
 
-In the `map` function, the variable `file` was chosen to represent each element that is passed to the function. The function emits a tuple where the first element is the organ name, returned by the `getSimpleName()` method, and the second element is the `.fa` file path. 
+In the `map` function, the variable `file` was chosen to represent each element that is passed to the function. The function emits a tuple where the first element is the sample name, returned by the `getSimpleName()` method, and the second element is the `.fa` file path. 
 
 ```default
 params.transcriptome_file = "/scratch/users/.../nf-training/data/ggal/*.fa"
 
 transcriptome_ch = Channel.fromPath("$params.transcriptome_file")
-    .map { file -> 
-    def group_key = file.getSimpleName()
-    [group_key, fasta]
+    .map { fasta -> 
+    def sample = fasta.getSimpleName()
+    [sample, fasta]
     }
+    .view()
 ```
 :::
 
@@ -281,6 +297,8 @@ transcriptome_ch = Channel.fromPath("$params.transcriptome_file")
 **Challenge** 
 
 Modify the `INDEX` process to match the input structure of `transcriptome_ch`. Modify the output of `INDEX` so that a tuple is emitted, where the first elememt is the value of the grouping key, and the second element is the path of the `salmon_idx` folder.
+
+Index the `transcriptome_ch` using the `INDEX` process. Emit the output as `index_ch`.
 
 
 ::: {.callout-note appearance="simple" collapse="true"}
@@ -304,11 +322,34 @@ process INDEX {
     """
 }
 ```
+
+Inside the workflow block, `transcriptome_ch` is used as input into the `INDEX` process. The process outputs are emitted as `index_ch`
+
+```default
+workflow {
+  index_ch = INDEX(transcriptome_ch)
+  index_ch.view()
+}
+```
+
+The `index_ch` channel is now a tuple where the first element is the grouping key, and the second element is the path to the salmon index folder. 
+
+```default
+>>> nextflow run rnaseq.nf
+N E X T F L O W  ~  version 23.04.1
+Launching `rnaseq.nf` [dreamy_linnaeus] DSL2 - revision: b4ec1d02bd
+[21/91088a] process > INDEX (3) [100%] 3 of 3
+[liver, /scratch/users/.../work/06/f0a54ba9191cce9f73f5a97bfb7bea/salmon_idx]
+[lung, /scratch/users/.../work/60/e84b1b1f06c43c8cf69a5c621d5a41/salmon_idx]
+[gut, /scratch/users/.../work/21/91088aafb553cb4b933bc2b3493f33/salmon_idx]
+```
 :::
+
+Copy the new `INDEX` process into `modules.nf`. In the workflow block of `rnaseq.nf`, use `transcriptome_ch` as the input to the process `INDEX`. 
 
 </br>
 
-## **6.1.3 `combine` **
+## **6.1.2 `combine` **
 
 The `combine` operator produces the cross product (ie. outer product) combinations of two source channels.
 
@@ -319,7 +360,6 @@ numbers = Channel.of(1, 2, 3)
 words = Channel.of('hello', 'ciao')
 
 numbers.combine(words).view()
-
 ```
 
 Output:
@@ -332,9 +372,9 @@ Output:
 [3, ciao]
 ```
 
-The `by` option can be used to combine items that share a matching key. This value is zero-based, and represents the index or list of indices for the grouping key. The emitted tuple will consist of multiple elements, where the first element is the grouping key, and the following elements are the values of the input channels. 
+The `by` option can be used to combine items that share a matching key. This value is zero-based, and represents the index or list of indices for the grouping key. The emitted tuple will consist of multiple elements.
 
-For example: `source` and `target` are channels consisting of multiple tuples, where the first element of each tuple represents the grouping key. Since indexing is zero-based, `by` is set to `0` to represent the first element of the tuple. Each value within the `source` and `target` channels are separate elements in the emitted tuple. 
+For example: `source` and `target` are channels consisting of multiple tuples, where the first element of each tuple represents the grouping key. Since indexing is zero-based, `by` is set to `0` to represent the first element of the tuple. 
 
 ```default
 source = Channel.of( [1, 'alpha'], [2, 'beta'] )
@@ -342,7 +382,8 @@ target = Channel.of( [1, 'x'], [1, 'y'], [1, 'z'], [2, 'p'], [2, 'q'], [2, 't'] 
 
 source.combine(target, by: 0).view()
 ```
-Output:
+
+Each value within the `source` and `target` channels are separate elements, resulting in the emitted tuple each containing 3 elements: 
 ```default
 [1, alpha, x]
 [1, alpha, y]
@@ -354,23 +395,23 @@ Output:
 
 **Exercise** 
 
-In the RNA-seq pipeline, index `transcriptome_ch` using the `INDEX` process. Emit the output as `index_ch`.
-
-Create a channel `quant_inputs_ch` that contains the `reads_ch` combined with the `index_ch` using a matching key. The emitted channel should contain three elements, where the first element is the grouping key, the second element is the path to the salmon index file, and the third element is a list of the `.fq` pairs.
+In our RNA-seq pipeline, create a channel `quant_inputs_ch` that contains the `reads_ch` combined with the `index_ch` via a matching key. The emitted channel should contain three elements, where the first element is the grouping key, the second element is the path to the salmon index folder, and the third element is a list of the `.fq` pairs.
 
 The expected output:
 ```default
-[liver, /scratch/users/.../work/cf/42458b80e050a466d62baf99d0c1cf/salmon_idx, [/scratch/users/.../nf-training/data/ggal/liver_1.fq, /scratch/users/.../nf-training/data/ggal/liver_2.fq]]
-[lung, /scratch/users/.../work/64/90a77a5f1ed5a0000f6620fd1fab9a/salmon_idx, [/scratch/users/.../nf-training/data/ggal/lung_1.fq, /scratch/users/.../nf-training/data/ggal/lung_2.fq]]
-[gut, /scratch/users/.../work/37/352b00bfb71156a9250150428ddf1d/salmon_idx, [/scratch/users/.../nf-training/data/ggal/gut_1.fq, /scratch/users/.../nf-training/data/ggal/gut_2.fq]]
+[liver, /scratch/users/.../work/cf/42458b80e050a466d62baf99d0c1cf/salmon_idx, [/scratch/users/.../training/nf-training/data/ggal/liver_1.fq, /scratch/users/.../training/nf-training/data/ggal/liver_2.fq]]
+[lung, /scratch/users/.../work/64/90a77a5f1ed5a0000f6620fd1fab9a/salmon_idx, [/scratch/users/.../training/nf-training/data/ggal/lung_1.fq, /scratch/users/.../training/nf-training/data/ggal/lung_2.fq]]
+[gut, /scratch/users/.../work/37/352b00bfb71156a9250150428ddf1d/salmon_idx, [/scratch/users/.../training/nf-training/data/ggal/gut_1.fq, /scratch/users/.../training/nf-training/data/ggal/gut_2.fq]]
 ```
 
-Use `quant_inputs_ch` as the input for the `QT` process. Modify the process such that the input will be a tuple consisting of three elements, where the first element is the grouping key, the second element is the salmon index and the third element is the list of `.fq` reads. Also modify the output of the `QT` process to emit a tuple of two elements, where the first element is the grouping key and the second element is the `$sample_id` folder. Emit the output as `quant_ch` in the `workflow` block.
+Use `quant_inputs_ch` as the input for the `QT` process within the workflow block. 
+
+Modify the process such that the input will be a tuple consisting of three elements, where the first element is the grouping key, the second element is the salmon index and the third element is the list of `.fq` reads. Also modify the output of the `QT` process to emit a tuple of two elements, where the first element is the grouping key and the second element is the `$sample_id` folder. Emit the process output as `quant_ch` in the `workflow` block.
 
 ::: {.callout-note appearance="simple" collapse="true"}
 ### Solution
 
-The `reads_ch` is combined with the `index_ch` using the `combine` channel operator, and is assigned to the channel `quant_inputs_ch`. The new `quant_inputs_ch` channel is input into the `QT` process. 
+The `reads_ch` is combined with the `index_ch` using the `combine` channel operator with `by: 0`, and is assigned to the channel `quant_inputs_ch`. The new `quant_inputs_ch` channel is input into the `QT` process. 
 
 ```default
 workflow {
@@ -391,7 +432,7 @@ process QUANTIFICATION {
     tuple val(sample_id), path(salmon_index), path(reads)
 
     output:
-    tuple val(sample_id) path("$sample_id")
+    tuple val(sample_id), path("$sample_id")
 
     script:
     """
@@ -400,13 +441,13 @@ process QUANTIFICATION {
     """
 }
 ```
-
 :::
 
+</br>
 
-## **6.1.4 `groupTuple` **
+## **6.1.3 `groupTuple` **
 
-The `groupTuple` operator collects tuples into groups based on a grouping key, emitting a new tuple for each distinct key. The `groupTuple` differs from the `combine` operator in that it is performed on one input channel, and the matching values are emitted as a list. 
+The `groupTuple` operator collects tuples into groups based on a similar grouping key, emitting a new tuple for each distinct key. The `groupTuple` differs from the `combine` operator in that it is performed on one input channel, and the matching values are emitted as a list. 
 
 ```default
 Channel.of( [1, 'A'], [1, 'B'], [2, 'C'], [3, 'B'], [1, 'C'], [2, 'A'], [3, 'D'] )
@@ -432,22 +473,23 @@ Channel.of( [1, 'A'], [1, 'B'], [2, 'C'], [3, 'B'], [1, 'C'], [2, 'A'], [3, 'D']
 [[3], D]
 ```
 
-In the RNA-seq pipeline, the `fromFilePairs` channel factory has been used to to convert paired `.fq` to a channel of tuples: 
+</br>
+
+In the workflow script `rnaseq.nf` we defined the `reads` parameter to be multiple paired `.fq` files that are created into a channel using the `fromFilePairs` channel factory. This created a tuple where the first element is a unique grouping key, created automatically based on similarities in file name, and the second element contains the list of paired files.
+
 
 ```default
 #!/usr/bin/env nextflow
 
 params.reads = "/scratch/users/.../nf-training/data/ggal/*_{1,2}.fq"
-params.transcriptome_file = "/scratch/users/.../nf-training/ggal/transcriptome.fa"
 
 reads_ch = Channel.fromFilePairs("$params.reads")
-reads_ch.view()
 ```
 
 Now, move the `/scratch/users/.../nf-training/data/ggal/lung_2.fq` file into another directory so the folder contains one lung `.fq` file: 
 ```default
->>> mv /scratch/users/.../nf-training/data/ggal/lung_2.fq .
->>> ls /scratch/users/.../nf-training/data/ggal
+>>> mv /scratch/users/.../training/nf-training/data/ggal/lung_2.fq .
+>>> ls /scratch/users/.../training/nf-training/data/ggal
 gut_1.fq
 gut_2.fq
 gut.transcriptome.fa
@@ -460,27 +502,30 @@ lung.transcriptome.fa
 
 **Exercise** 
 
-Use the `fromPath` channel operator to read all `.fq` files. Then, use `map` to create a mapping function that returns a tuple, where the first element is the grouping key, and the second element is the `.fq` file. Then, use `groupTuple()` to  create channels containing both paired and single-end `.fq` files. 
+Use the `fromPath` channel factory to read all `.fq` files as separate elements. 
+
+Then, use `map` to create a mapping function that returns a tuple, where the first element is the grouping key, and the second element is the `.fq` file(s). 
+
+Then, use `groupTuple()` to create channels containing both single and paired `.fq` files. Within the `groupTuple()` operator, set `sort: true`, which orders the groups numerically, ensuring the first `.fq` is first. 
 
 Expected output:
 ```default
-[lung, [/scratch/users/.../nf-training/data/ggal/lung_1.fq]]
-[gut, [/scratch/users/.../nf-training/data/ggal/gut_2.fq, /scratch/users/.../nf-training/data/ggal/gut_1.fq]]
-[liver, [/scratch/users/.../nf-training/data/ggal/liver_1.fq, /scratch/users/.../nf-training/data/ggal/liver_2.fq]]
+[lung, [/scratch/users/.../training/nf-training/data/ggal/lung_1.fq]]
+[gut, [/scratch/users/.../training/nf-training/data/ggal/gut_1.fq, /scratch/users/.../training/nf-training/data/ggal/gut_2.fq]]
+[liver, [/scratch/users/.../training/nf-training/data/ggal/liver_1.fq, /scratch/users/.../training/nf-training/data/ggal/liver_2.fq]]
 ```
 
-The grouping key can be defined as the following. `file` is the implicit variable defined inside the function that represents each `.fq` file. The `getName()` method will return the file name without the full path. `replaceAll` is used to remove the `_2.fq` and `_1.fq` file suffixes. 
+Inside the `map` function, the following can be used to extract the sample name from the `.fq` files. `file` is the local variable defined inside the function that represents each `.fq` file. The `getName()` method will return the file name without the full path, and `replaceAll` is used to remove the `_2.fq` and `_1.fq` file suffixes. 
 
 ```default
 def group_key = file.getName().replaceAll(/_2.fq/,'').replaceAll(/_1.fq/,'')
 ```
 
-For `file = /scratch/users/.../nf-training/data/ggal/gut_2.fq`, the defined `group_key` will be `gut`. 
-
 For a full list of Nextflow file attributes, see [here](https://www.nextflow.io/docs/latest/script.html).
 
 ::: {.callout-note appearance="simple" collapse="true"}
 ### Solution
+The `fromPath` channel is used to read all `.fq` files separately. The `map` function is then used to create a two-element tuple where the first element is a grouping key and the second element is the list of `.fq` file(s). 
 
 ```default
 reads_ch = Channel.fromPath("/home/sli/nextflow_training/training/nf-training/data/ggal/*.fq")
@@ -488,20 +533,21 @@ reads_ch = Channel.fromPath("/home/sli/nextflow_training/training/nf-training/da
     def group_key = file.getName().replaceAll(/_2.fq/,'').replaceAll(/_1.fq/,'')
     [group_key, file]
   }
-  .groupTuple()
+  .groupTuple(sort: true)
   .view()
 ```
 :::
 
-The `quant_inputs_ch` should now consist of:
+Now, run the workflow up to the `combine` step. The `quant_inputs_ch` should now consist of:
 ```default
 [liver, /scratch/users/.../work/cf/42458b80e050a466d62baf99d0c1cf/salmon_idx, [/scratch/users/.../nf-training/data/ggal/liver_1.fq, /scratch/users/.../nf-training/data/ggal/liver_2.fq]]
 [lung, /scratch/users/.../work/64/90a77a5f1ed5a0000f6620fd1fab9a/salmon_idx, [/scratch/users/.../nf-training/data/ggal/lung_1.fq]]
 [gut, /scratch/users/.../work/37/352b00bfb71156a9250150428ddf1d/salmon_idx, [/scratch/users/.../nf-training/data/ggal/gut_1.fq, /scratch/users/.../nf-training/data/ggal/gut_2.fq]]
 ```
 
+</br>
 
-## **6.1.5 `flatten` **
+## **6.1.4 `flatten` **
 The flatten operator flattens each item from a source channel and emits the elements separately. Deeply nested inputs are also flattened. 
 
 ```default
@@ -518,6 +564,8 @@ Output:
 5
 6
 ```
+
+</br>
 
 Within the script block of the `QUANTIFICATION` process in the RNA-seq pipeline, we are assuming the reads are paired, and specify `-1 ${reads[0]} -2 ${reads[1]}` as inputs to `salmon quant`. 
 
@@ -538,7 +586,7 @@ process QUANTIFICATION {
     """
 }
 ```
-Now that the input `reads` can be either single or paired-end, the `QUANTIFICATION` process needs to be modified to allow for either input type. This can be done using the `flatten()` operator, and conditional script statements. Additionally, the `size()` method can be used to calculate the size of a list. 
+Now that the input `reads` can be either single or paired, the `QUANTIFICATION` process needs to be modified to allow for either input type. This can be done using the `flatten()` operator, and conditional script statements. Additionally, the `size()` method can be used to calculate the size of a list. 
 
 The script block can be changed to the following: 
 
@@ -577,9 +625,38 @@ input_reads.flatten().size()
 
 For single reads, the input to `salmon quant` becomes `-r $reads`
 
+</br>
+
 **Exercise** 
 
-Currently the `TRIMGALORE` process only accounts for paired reads. Modify the process such that both single and paired-end reads can be used. For single reads, the following script block can be used:
+Currently the `TRIMGALORE` process only accounts for paired reads. 
+
+```default
+process TRIMGALORE {
+    container '/config/binaries/singularity/containers_devel/nextflow/depot.galaxyproject.org-singularity-trim-galore-0.6.6--0.img' 
+
+    input:
+        tuple val(sample_id), path(reads)
+    
+    output:
+        tuple val(sample_id), path("*{3prime,5prime,trimmed,val}*.fq.gz"), emit: reads
+        tuple val(sample_id), path("*report.txt")                        , emit: log     , optional: true
+        tuple val(sample_id), path("*unpaired*.fq.gz")                   , emit: unpaired, optional: true
+        tuple val(sample_id), path("*.html")                             , emit: html    , optional: true
+        tuple val(sample_id), path("*.zip")                              , emit: zip     , optional: true
+
+    script:
+        """
+        trim_galore \\
+        --paired \\
+        --gzip \\
+        ${reads[0]} \\
+        ${reads[1]}
+        """
+}
+```
+
+Modify the process such that both single and paired reads can be used. For single reads, the following script block can be used:
 
 ```default
 """
@@ -588,7 +665,6 @@ trim_galore \\
   $reads
 """
 ```
-
 
 ::: {.callout-note appearance="simple" collapse="true"}
 ### Solution
@@ -654,6 +730,7 @@ workflow {
 
 ::: {.callout-note appearance="simple" collapse="true"}
 ### Solution
+The `output` block of both processes have been modified to be tuples containing a grouping key. 
 
 ```default
 process FASTQC {
