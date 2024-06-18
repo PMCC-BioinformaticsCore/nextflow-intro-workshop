@@ -18,7 +18,7 @@ These workshops are designed to provide participants with a foundational underst
 | [Basic to Create a Nextflow Workflow](./sessions/2_nf_dev_intro.html)| Introduction to developing bioinformatics workflow with Nextflow (Part1) | 29th May 2024 | 
 | [Developing Modularised Workflows](./sessions/2_nf_dev_intro.html) | Introduction to developing bioinformatics workflow with Nextflow (Part2) | 5th Jun 2024 | 
 | [Working with nf-core Templates](./sessions/2_nf_dev_intro.html) | Introduction to developing bioinformatics workflow with Nextflow (Part3) | 12th Jun 2024 | 
-| To-be-added | Introduction to developing bioinformatics workflow with Nextflow (Part4) | 19th Jun 2024 | 
+| [Working with Nextflow Built-in Functions](./sessions/2_nf_dev_intro.html) | Introduction to developing bioinformatics workflow with Nextflow (Part4) | 19th Jun 2024 | 
 
 ### Past Workshop Sessions
 
