@@ -2,58 +2,62 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://PMCC-BioinformaticsCore.github.io/nextflow-intro-workshop/sessions/2_nf_dev_intro.html</loc>
-    <lastmod>2024-06-18T14:54:38.961Z</lastmod>
+    <lastmod>2024-06-18T17:57:28.085Z</lastmod>
   </url>
   <url>
     <loc>https://PMCC-BioinformaticsCore.github.io/nextflow-intro-workshop/index.html</loc>
-    <lastmod>2024-06-18T14:54:38.132Z</lastmod>
+    <lastmod>2024-06-18T17:57:27.250Z</lastmod>
   </url>
   <url>
     <loc>https://PMCC-BioinformaticsCore.github.io/nextflow-intro-workshop/workshops/2.3_tips_and_tricks.html</loc>
-    <lastmod>2024-06-18T14:54:36.432Z</lastmod>
+    <lastmod>2024-06-18T17:57:25.584Z</lastmod>
   </url>
   <url>
     <loc>https://PMCC-BioinformaticsCore.github.io/nextflow-intro-workshop/workshops/6.1_operators.html</loc>
-    <lastmod>2024-06-18T14:54:35.497Z</lastmod>
+    <lastmod>2024-06-18T17:57:24.652Z</lastmod>
   </url>
   <url>
-    <loc>https://PMCC-BioinformaticsCore.github.io/nextflow-intro-workshop/workshops/4.1_modules.html</loc>
-    <lastmod>2024-06-18T14:54:33.932Z</lastmod>
-  </url>
-  <url>
-    <loc>https://PMCC-BioinformaticsCore.github.io/nextflow-intro-workshop/workshops/4.1_draft_future_sess.html</loc>
-    <lastmod>2024-06-18T14:54:32.284Z</lastmod>
-  </url>
-  <url>
-    <loc>https://PMCC-BioinformaticsCore.github.io/nextflow-intro-workshop/workshops/1.1_intro_nextflow.html</loc>
-    <lastmod>2024-06-18T14:54:30.435Z</lastmod>
-  </url>
-  <url>
-    <loc>https://PMCC-BioinformaticsCore.github.io/nextflow-intro-workshop/workshops/3.1_creating_a_workflow.html</loc>
-    <lastmod>2024-06-18T14:54:29.766Z</lastmod>
-  </url>
-  <url>
-    <loc>https://PMCC-BioinformaticsCore.github.io/nextflow-intro-workshop/workshops/5.1_nf_core_template.html</loc>
-    <lastmod>2024-06-18T14:54:31.887Z</lastmod>
+    <loc>https://PMCC-BioinformaticsCore.github.io/nextflow-intro-workshop/workshops/8.1_scatter_gather_output.html</loc>
+    <lastmod>2024-06-18T17:57:23.110Z</lastmod>
   </url>
   <url>
     <loc>https://PMCC-BioinformaticsCore.github.io/nextflow-intro-workshop/workshops/2.2_troubleshooting.html</loc>
-    <lastmod>2024-06-18T14:54:33.050Z</lastmod>
+    <lastmod>2024-06-18T17:57:21.650Z</lastmod>
+  </url>
+  <url>
+    <loc>https://PMCC-BioinformaticsCore.github.io/nextflow-intro-workshop/workshops/5.1_nf_core_template.html</loc>
+    <lastmod>2024-06-18T17:57:20.502Z</lastmod>
+  </url>
+  <url>
+    <loc>https://PMCC-BioinformaticsCore.github.io/nextflow-intro-workshop/workshops/3.1_creating_a_workflow.html</loc>
+    <lastmod>2024-06-18T17:57:18.440Z</lastmod>
+  </url>
+  <url>
+    <loc>https://PMCC-BioinformaticsCore.github.io/nextflow-intro-workshop/workshops/1.1_intro_nextflow.html</loc>
+    <lastmod>2024-06-18T17:57:19.115Z</lastmod>
+  </url>
+  <url>
+    <loc>https://PMCC-BioinformaticsCore.github.io/nextflow-intro-workshop/workshops/4.1_draft_future_sess.html</loc>
+    <lastmod>2024-06-18T17:57:20.937Z</lastmod>
+  </url>
+  <url>
+    <loc>https://PMCC-BioinformaticsCore.github.io/nextflow-intro-workshop/workshops/4.1_modules.html</loc>
+    <lastmod>2024-06-18T17:57:22.515Z</lastmod>
   </url>
   <url>
     <loc>https://PMCC-BioinformaticsCore.github.io/nextflow-intro-workshop/workshops/1.2_intro_nf_core.html</loc>
-    <lastmod>2024-06-18T14:54:34.745Z</lastmod>
+    <lastmod>2024-06-18T17:57:23.910Z</lastmod>
   </url>
   <url>
     <loc>https://PMCC-BioinformaticsCore.github.io/nextflow-intro-workshop/workshops/00_setup.html</loc>
-    <lastmod>2024-06-18T14:54:35.926Z</lastmod>
+    <lastmod>2024-06-18T17:57:25.093Z</lastmod>
   </url>
   <url>
     <loc>https://PMCC-BioinformaticsCore.github.io/nextflow-intro-workshop/workshops/2.1_customise_and_run.html</loc>
-    <lastmod>2024-06-18T14:54:37.766Z</lastmod>
+    <lastmod>2024-06-18T17:57:26.880Z</lastmod>
   </url>
   <url>
     <loc>https://PMCC-BioinformaticsCore.github.io/nextflow-intro-workshop/sessions/1_intro_run_nf.html</loc>
-    <lastmod>2024-06-18T14:54:38.554Z</lastmod>
+    <lastmod>2024-06-18T17:57:27.669Z</lastmod>
   </url>
 </urlset>
