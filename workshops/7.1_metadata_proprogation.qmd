@@ -98,10 +98,56 @@ map { id, reads ->
 }
 ```
 
+By setting up our the "meta", in our tuple with the format above, allows us to access the values in "sample" throughout our modules/configs as `${meta.sample}`.
+
+## **Second Parse: `.splitCsv`**
+We have briefly touched on `.splitCsv` in the first week.
+
+As a quick overview
+
+Assuming we have the samplesheet
+```default
+sample_name,fastq1,fastq2
+gut_sample,/.../training/nf-training/data/ggal/gut_1.fq,/.../training/nf-training/data/ggal/gut_2.fq
+liver_sample,/.../training/nf-training/data/ggal/liver_1.fq,/.../training/nf-training/data/ggal/liver_2.fq
+lung_sample,/.../training/nf-training/data/ggal/lung_1.fq,/.../training/nf-training/data/ggal/lung_2.fq
+```
+
+We can set up a workflow to read in these files as:
+
+```default
+params.reads = "/.../rnaseq_samplesheet.csv"
+
+reads_ch = Channel.fromPath(params.reads)
+reads_ch.view()
+reads_ch = reads_ch.splitCsv(header:true)
+reads_ch.view()
+```
+
+
 ::: callout-tip
 ## Challenge{.unlisted}
+Using `.splitCsv` and `.map` read in the samplesheet below:
+`/home/Shared/For_NF_Workshop/training/nf-training-advanced/metadata/data/samplesheet.csv`
+
+Set the meta to contain the following keys from the header `id`, `repeat` and `type`
+:::
+
+:::{.callout-caution collapse="true"}
+## Solution
+```default
+params.input = "/home/Shared/For_NF_Workshop/training/nf-training-advanced/metadata/data/samplesheet.csv"
+
+ch_sheet = Channel.fromPath(params.input)
+
+ch_sheet.splitCsv(header:true)
+    .map {
+        it ->
+            [[it.id, it.repeat, it.type], it.fastq_1, it.fastq_2]
+    }.view()
 
 
+```
 :::
 
 ## **7.2 Manipulating Metadata and Channels**
@@ -252,8 +298,3 @@ ch_reads.map {
     .groupTuple().view()
 ```
 
-
-::: callout-tip
-## Challenge {.unlisted}
-
-:::
