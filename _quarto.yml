@@ -35,7 +35,7 @@ website:
           href: workshops/5.1_nf_core_template.html
         - text: "Nextflow Operators"
           href: workshops/6.1_operators.html
-        - text: "Nextflow Operators"
+        - text: "Metadata Propagation"
           href: workshops/7.1_metadata_propagation.html
         - text: "Output, scatter, and Gather"
           href: workshops/8.1_scatter_gather_output.html
