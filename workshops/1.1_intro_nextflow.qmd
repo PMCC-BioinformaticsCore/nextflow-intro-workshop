@@ -1,5 +1,5 @@
 ---
-title: "**Introduction to Nextflow**"
+title: "**Introduction to Nextflow 2024**"
 output:
   html_document:
     toc: false

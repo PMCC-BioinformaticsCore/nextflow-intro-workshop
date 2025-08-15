@@ -26,7 +26,7 @@ These workshops are designed to provide participants with a foundational underst
 |------------|----------| ---------- |
 | [Introduction to Nextflow and running nf-core workflows](./sessions/1_intro_run_nf.html)| Introduction to Nextflow: Introduce nextflow’s core features and concepts + nf-core + how to run it at PeterMac | 22nd Nov 2023 | 
 | [Introduction to Nextflow and running nf-core workflows](./sessions/1_intro_run_nf.html)| (Re-run) Introduction to Nextflow: Introduce nextflow’s core features and concepts + nf-core + how to run it at PeterMac | 15th May 2024 | 
-| [Nextflow & nf-core](https://pmcc-bioinformaticscore.github.io/nextflow-nf-core-workshop-2025_v2/) | Collaborative Nextflow workshop with WEHI & Melbourne Bioinformatics | May 2025 | 
+| [Nextflow & nf-core](https://pmcc-bioinformaticscore.github.io/nextflow-nf-core-workshop-2025_v2/) | Collaborative Nextflow workshop with WEHI & Melbourne Bioinformatics | 23 May 2025 | 
 
 ### Credits and acknowledgement
 
